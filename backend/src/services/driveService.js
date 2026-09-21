@@ -23,12 +23,9 @@ const FOLDER_MIME = 'application/vnd.google-apps.folder';
  */
 async function getUserFolderName(authClient) {
   try {
-    const people = google.people({ version: 'v1', auth: authClient });
-    const { data } = await people.people.get({
-      resourceName: 'people/me',
-      personFields: 'names',
-    });
-    const name = data.names?.[0]?.displayName;
+    const oauth2 = google.oauth2({ version: 'v2', auth: authClient });
+    const { data } = await oauth2.userinfo.get();
+    const name = data.name;
     if (name && name.trim()) return name.trim();
   } catch (err) {
     // Non-fatal — fall back to a safe default
@@ -61,6 +58,25 @@ export async function findOrCreateFolder(authClient) {
   if (data.files?.length > 0) {
     // Folder already exists — return its ID, no duplicate created
     return { folderId: data.files[0].id, folderName };
+  }
+
+  // If a legacy 'ProjectX-Photos' folder exists from earlier, rename it to the user's name
+  if (folderName !== 'ProjectX-Photos') {
+    const { data: legacyData } = await drive.files.list({
+      q: `mimeType='${FOLDER_MIME}' and name='ProjectX-Photos' and trashed=false`,
+      fields: 'files(id, name)',
+      spaces: 'drive',
+      pageSize: 1,
+    });
+
+    if (legacyData.files?.length > 0) {
+      const legacyId = legacyData.files[0].id;
+      await drive.files.update({
+        fileId: legacyId,
+        requestBody: { name: folderName },
+      });
+      return { folderId: legacyId, folderName };
+    }
   }
 
   // No existing folder — create it now
@@ -150,4 +166,19 @@ export async function grantDrivePermission(authClient, fileId, emailAddress) {
     // Set to true if you want the target to receive an email notification
     sendNotificationEmail: false,
   });
+}
+
+/**
+ * Stream an image file directly from Drive.
+ *
+ * @param {import('googleapis').Auth.OAuth2Client} authClient
+ * @param {string} fileId
+ * @returns {Promise<import('axios').AxiosResponse>}
+ */
+export async function getPhotoStream(authClient, fileId) {
+  const drive = google.drive({ version: 'v3', auth: authClient });
+  return drive.files.get(
+    { fileId, alt: 'media' },
+    { responseType: 'stream' }
+  );
 }
