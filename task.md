@@ -32,18 +32,18 @@ Committed. OAuth 2.0 authorization-code flow, backend token exchange, session ha
 ## Task 7 — Drive-based sharing ✅ DONE
 - Verified Drive permission sharing without public links. Tested with `su1@vr2.in`.
 
-## Task 8 — UX pass across all features (In Progress)
-- Confirm every async action (login, upload, folder/sheet creation, sharing) has a loading state, a disabled state while in flight, and a friendly error message on failure — per AGENTS.md Section 4.
-- Confirm responsive layout on a narrow viewport.
-- Remove any leftover `console.log()` debugging statements.
+## Task 8 — UX pass across all features ✅ DONE
+- Confirmed loading states, disabled states during async actions, and user-friendly error banners across login, upload, gallery, map, and sharing.
+- Responsive layout tested across desktop and mobile viewports.
+- Verified zero leftover debug `console.log()` statements.
 
-## Task 9 — API efficiency + cleanup pass
-- Confirm no repeated folder/sheet searches once already found in a session.
-- Remove unused dependencies, unused imports, dead code.
-- Confirm no hardcoded IDs, folder names, or credentials anywhere in the codebase.
+## Task 9 — API efficiency + cleanup pass ✅ DONE
+- Implemented in-session caching (`Map`) for Drive folder ID and Sheet ID to eliminate repeated Drive search API queries.
+- Cleaned up imports and removed People API dependency.
+- Verified zero hardcoded credentials, folder names, or spreadsheet IDs.
 
-## Task 10 — Documentation
-- Write the PDF report per AGENTS.md Section 7 (architecture, prompts used in order with reasoning, API setup steps, screenshot proof of sharing, standards-compliance explanation, challenges faced).
+## Task 10 — Documentation (In Progress)
+- Write README with local setup instructions and generate documentation report per AGENTS.md Section 7.
 
 ---
 
