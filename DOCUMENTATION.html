@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Project X — Technical Documentation Report</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #1a1a1a;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2.5rem;
+      background: #ffffff;
+    }
+
+    h1, h2, h3 {
+      color: #0f172a;
+      font-weight: 700;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      border-bottom: 2px solid #6366f1;
+      padding-bottom: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    h2 {
+      font-size: 1.4rem;
+      margin-top: 2rem;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 0.5rem;
+    }
+
+    h3 {
+      font-size: 1.1rem;
+      margin-top: 1.25rem;
+    }
+
+    p, li {
+      font-size: 0.95rem;
+      color: #334155;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.25rem 0;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 0.6rem 0.85rem;
+      text-align: left;
+    }
+
+    th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    pre {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      font-family: Consolas, Monaco, monospace;
+    }
+
+    code {
+      background: #f1f5f9;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.88rem;
+      font-family: Consolas, Monaco, monospace;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: #e0e7ff;
+      color: #4338ca;
+    }
+
+    @media print {
+      body {
+        padding: 0;
+        max-width: 100%;
+      }
+      h2 {
+        page-break-after: avoid;
+      }
+      table, pre {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<h1>Project X — Technical Engineering Documentation Report</h1>
+
+<p><strong>Candidate</strong>: M. Rajiv &nbsp;|&nbsp; <strong>Project</strong>: Project X (Photo Drive Logger) &nbsp;|&nbsp; <strong>Stack</strong>: React (Vite) + Node.js (Express) + Google Drive & Sheets API</p>
+
+<h2>1. Executive Summary & App Overview</h2>
+<p><strong>Project X</strong> is a production-style, lightweight web application built to fulfill all requirements specified in <code>AGENTS.md</code>. It allows users to authenticate via Google OAuth 2.0, automatically creates and manages a dedicated Google Drive folder named after the user, uploads geotagged photos with multi-part streaming, extracts GPS EXIF data client-side, logs coordinates to an auto-created Google Sheet, presents a responsive gallery with authenticated thumbnails, plots coordinates on an interactive Leaflet map, and shares photos with Google accounts (specifically tested with <code>su1@vr2.in</code>).</p>
+
+<h2>2. System Architecture</h2>
+<pre>
+Frontend (React 18 + Vite)
+ ├── LoginPage (Google OAuth authorization-code flow)
+ ├── Dashboard (Tab navigation: Gallery / Map)
+ ├── Gallery (Responsive photo grid, live auto-refresh on upload)
+ ├── PhotoCard (Authenticated blob thumbnail loader, GPS badge, Share inline modal)
+ ├── MapView (Leaflet + OpenStreetMap tiles, zero billed APIs)
+ └── Utils & Services (exifr client-side extraction, file validation, API client)
+      │
+      │ REST / HTTPS (Bearer Token)
+      ▼
+Backend (Node.js + Express)
+ ├── Auth Router (/api/auth/google — server-side token exchange, OpenID profile resolution)
+ ├── Drive Router (/api/drive/upload, /api/drive/photos, /api/drive/thumbnail/:fileId, /api/drive/share/:fileId)
+ ├── Drive Service (Folder auto-creation with duplicate check, streaming upload, in-session Map cache)
+ └── Sheets Service (Sheet auto-creation, row appending, GPS batch fetch, in-session Map cache)
+      │
+      │ googleapis Node Client
+      ▼
+Google Cloud (Drive API v3, Sheets API v4, OAuth2 / OIDC)
+</pre>
+
+<h2>3. Engineering Prompts & Reasoning Log</h2>
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Prompt Summary</th>
+      <th>Engineering Reasoning & Context</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>1</strong></td>
+      <td>Initialize project structure adhering to AGENTS.md.</td>
+      <td>Establish clean directory separation, install only designated lightweight dependencies, configure .gitignore, and create .env.example templates.</td>
+    </tr>
+    <tr>
+      <td><strong>2</strong></td>
+      <td>Adopt incremental orchestrator approach working through task.md.</td>
+      <td>Enforce step-by-step verification, testing each requirement individually before making atomic Conventional Commits.</td>
+    </tr>
+    <tr>
+      <td><strong>3</strong></td>
+      <td>Audit environment variables and git commit safety.</td>
+      <td>Ensure no secrets or live credentials were committed to git, following strict security standards.</td>
+    </tr>
+    <tr>
+      <td><strong>4</strong></td>
+      <td>Start and test both frontend and backend servers.</td>
+      <td>Establish concurrent local server daemons (localhost:5173 and localhost:4000) and verify port connectivity.</td>
+    </tr>
+    <tr>
+      <td><strong>5</strong></td>
+      <td>Diagnose and resolve OAuth code exchange failure.</td>
+      <td>Identified missing backend secret and resolved the disabled Google People API issue by switching to OpenID Connect ID token decoding.</td>
+    </tr>
+    <tr>
+      <td><strong>6</strong></td>
+      <td>Handle Google consent screen and scope validation.</td>
+      <td>Guided user through OAuth consent and verified that profile information resolved accurately.</td>
+    </tr>
+    <tr>
+      <td><strong>7</strong></td>
+      <td>Security and scope clarification inquiry.</td>
+      <td>Explained the least-privilege architecture: why spreadsheets and drive.file are required, and confirmed that the app cannot access unrelated Drive documents.</td>
+    </tr>
+    <tr>
+      <td><strong>8</strong></td>
+      <td>Duplicate folder detection & thumbnail rendering diagnosis.</td>
+      <td>Explained Requirement 2 duplicate folder search logic and discovered that Chrome third-party cookie restrictions blocked Google Drive CDN thumbnails.</td>
+    </tr>
+    <tr>
+      <td><strong>9</strong></td>
+      <td>Implement backend thumbnail streaming proxy.</td>
+      <td>Enabled private Drive image streaming via the backend, allowing authenticated blob loading without CORS or cookie issues.</td>
+    </tr>
+    <tr>
+      <td><strong>10</strong></td>
+      <td>Verify photo sharing mechanism and Google Sheet logging.</td>
+      <td>Tested direct Drive user permissions (su1@vr2.in), Sheet row appending, and map coordinate plotting.</td>
+    </tr>
+    <tr>
+      <td><strong>11</strong></td>
+      <td>Final commit pass, in-session caching refactor, and documentation.</td>
+      <td>Added in-session Map caching for Drive folder and Sheet IDs, verified zero debug logs, and compiled this report.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>4. Google API & Authentication Setup</h2>
+<ul>
+  <li><strong>OAuth 2.0 Code Flow</strong>: Frontend uses <code>@react-oauth/google</code> with <code>postmessage</code> redirect. The authorization code is sent to the backend, which exchanges it for access and refresh tokens.</li>
+  <li><strong>OpenID Connect Profile Decoding</strong>: Extracts name, email, and picture directly from the cryptographically verified ID token without requiring the Google People API.</li>
+  <li><strong>Drive Folder Auto-Creation</strong>: Searches for existing folder named <code>M. Rajiv</code> before creating. Never duplicates folders.</li>
+  <li><strong>Google Sheets Logging</strong>: Auto-creates <code>GPS Log</code> spreadsheet and appends coordinates: <code>Photo Name | Drive Link | Latitude | Longitude | Timestamp</code>.</li>
+</ul>
+
+<h2>5. Security & Least-Privilege Design</h2>
+<ul>
+  <li><strong>Restricted Scope</strong>: Uses <code>https://www.googleapis.com/auth/drive.file</code>. The app can only see and edit files it creates. Personal user files in Drive are completely inaccessible.</li>
+  <li><strong>Backend Secrets Isolation</strong>: <code>GOOGLE_CLIENT_SECRET</code> is kept strictly on the backend. No credentials leaked to frontend bundles.</li>
+  <li><strong>No Public Links</strong>: Sharing uses Google Drive Permissions API (<code>type: 'user'</code>, <code>role: 'writer'</code>). Files are never publicly exposed.</li>
+  <li><strong>In-Memory Tokens</strong>: Tokens reside only in React runtime state and are never written to unencrypted storage (<code>localStorage</code>).</li>
+</ul>
+
+<h2>6. API Efficiency & Performance Optimizations</h2>
+<ul>
+  <li><strong>In-Session Folder & Sheet Caching</strong>: Uses in-memory <code>Map</code> caches (<code>_folderCache</code> and <code>_sheetCache</code>) to eliminate repeated Drive search API queries.</li>
+  <li><strong>Parallel Fetching</strong>: Executes Drive photo list and Sheet metadata queries simultaneously via <code>Promise.all</code>.</li>
+  <li><strong>Zero Memory Leaks</strong>: Object URLs generated for authenticated thumbnails are revoked upon component unmount via <code>URL.revokeObjectURL()</code>.</li>
+</ul>
+
+<h2>7. Proof of Sharing (su1@vr2.in)</h2>
+<p>As mandated by Requirement 8, photos were shared directly with <strong><code>su1@vr2.in</code></strong> via Google Drive user permissions, and verified in the Google Drive sharing panel.</p>
+
+</body>
+</html>
