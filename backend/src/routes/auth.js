@@ -35,21 +35,39 @@ router.post('/google', async (req, res) => {
       return res.status(502).json({ error: 'Authentication failed. Please try again.' });
     }
 
-    // Build a per-request authed client (never modifies the singleton)
-    const authedClient = getAuthedClient({ access_token: tokens.access_token });
+    // Extract user profile from the verified ID token (no extra API call or People API required)
+    let user = { name: 'Unknown', email: '', picture: null };
 
-    // Fetch user profile with minimum required fields
-    const people = google.people({ version: 'v1', auth: authedClient });
-    const { data: profile } = await people.people.get({
-      resourceName: 'people/me',
-      personFields: 'names,emailAddresses,photos',
-    });
+    if (tokens.id_token) {
+      try {
+        const ticket = await sharedClient.verifyIdToken({
+          idToken: tokens.id_token,
+          audience: process.env.GOOGLE_CLIENT_ID,
+        });
+        const payload = ticket.getPayload();
+        if (payload) {
+          user = {
+            name:    payload.name ?? 'Unknown',
+            email:   payload.email ?? '',
+            picture: payload.picture ?? null,
+          };
+        }
+      } catch (verifyErr) {
+        console.warn('[auth] id_token verification fallback:', verifyErr.message);
+      }
+    }
 
-    const user = {
-      name:    profile.names?.[0]?.displayName ?? 'Unknown',
-      email:   profile.emailAddresses?.[0]?.value ?? '',
-      picture: profile.photos?.[0]?.url ?? null,
-    };
+    // Fallback to standard OAuth2 userinfo if ID token lacked profile data
+    if (!user.email) {
+      const authedClient = getAuthedClient({ access_token: tokens.access_token });
+      const oauth2 = google.oauth2({ version: 'v2', auth: authedClient });
+      const { data: profile } = await oauth2.userinfo.get();
+      user = {
+        name:    profile.name ?? 'Unknown',
+        email:   profile.email ?? '',
+        picture: profile.picture ?? null,
+      };
+    }
 
     // Return the access token as the session token — it's what the backend
     // uses to authenticate all subsequent Drive/Sheets calls.
