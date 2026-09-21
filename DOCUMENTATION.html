@@ -303,7 +303,28 @@ app.use((err, _req, res, _next) =&gt; {
   <li><strong>Zero Memory Leaks</strong>: Object URLs generated for authenticated thumbnails are revoked upon component unmount via <code>URL.revokeObjectURL()</code>.</li>
 </ul>
 
-<h2>8. Proof of Sharing (su1@vr2.in)</h2>
+<h2>8. Challenges Faced &amp; Trade-offs Made</h2>
+<h3>Challenge: Private Drive Thumbnail Loading Across Origins &amp; Cookie Partitioning</h3>
+<ul>
+  <li><strong>The Problem</strong>: Google Drive's API returns direct <code>thumbnailLink</code> CDN URLs (<code>https://lh3.googleusercontent.com/u/0/d/...</code>). When the application is served on a different origin (e.g. <code>http://localhost:5173</code>), modern browsers (Chrome 115+, Safari) enforce strict third-party cookie partitioning and cross-origin isolation. Consequently, unauthenticated HTTP image requests initiated by standard <code>&lt;img src="..."&gt;</code> tags fail with <code>403 Forbidden</code> or load broken placeholder icons, because Google's CDN cannot access the user's ambient session cookies.</li>
+  <li><strong>The Solution</strong>: Rather than attempting to make files publicly accessible (which strictly violates our security standard: <em>"No file is ever made publicly accessible"</em>), we implemented an authenticated backend image streaming proxy at <code>GET /api/drive/thumbnail/:fileId</code>. The Express backend utilizes the user's Bearer access token to fetch the raw image stream from <code>drive.files.get({ fileId, alt: 'media' }, { responseType: 'stream' })</code> and pipes it directly to the browser. On the frontend, <code>PhotoCard.jsx</code> invokes <code>fetchThumbnailBlob()</code> to retrieve the binary payload as a Blob and binds it via <code>URL.createObjectURL()</code>.</li>
+  <li><strong>The Trade-Off (Latency vs. Reliability)</strong>:
+    <ul>
+      <li>Streaming through the backend introduces a real network round-trip for every photo: <code>Browser &rarr; Backend &rarr; Google Drive API &rarr; Backend &rarr; Browser</code>.</li>
+      <li>On the first gallery load, fetching each thumbnail independently adds visible latency (typically 1–3 seconds for multiple photos) compared to direct edge-cached CDN links.</li>
+    </ul>
+  </li>
+  <li><strong>Mitigation in Place</strong>:
+    <ul>
+      <li>The backend thumbnail endpoint sets strict HTTP caching headers: <code>Cache-Control: private, max-age=3600</code>.</li>
+      <li>Once loaded, repeat views or re-renders within the same browser session load instantly from the browser's disk/memory cache rather than re-fetching from Google Drive.</li>
+      <li>To prevent client memory leaks, <code>PhotoCard.jsx</code> cleans up allocated object URLs on component unmount via <code>URL.revokeObjectURL(blobUrl)</code>.</li>
+    </ul>
+  </li>
+  <li><strong>Engineering Rationale</strong>: Reliability across all browsers and platforms was decisively prioritized over raw initial load speed. An image thumbnail that takes 1–2 seconds to render reliably is vastly superior to broken image error icons, and fully preserves the zero-public-access security model.</li>
+</ul>
+
+<h2>9. Proof of Sharing (su1@vr2.in)</h2>
 <p>As mandated by Requirement 8, photos were shared directly with <strong><code>su1@vr2.in</code></strong> via Google Drive user permissions, and verified in the Google Drive sharing panel.</p>
 
 </body>

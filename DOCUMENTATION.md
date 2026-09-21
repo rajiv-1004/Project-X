@@ -236,7 +236,23 @@ The codebase enforces clear separation of concerns across dedicated architectura
 
 ---
 
-## 9. Proof of Sharing (su1@vr2.in)
+## 9. Challenges Faced & Trade-offs Made
+
+### Challenge: Private Drive Thumbnail Loading Across Origins & Cookie Partitioning
+- **The Problem**: Google Drive's API returns direct `thumbnailLink` CDN URLs (`https://lh3.googleusercontent.com/u/0/d/...`). When the application is served on a different origin (e.g. `http://localhost:5173`), modern browsers (Chrome 115+, Safari) enforce strict third-party cookie partitioning and cross-origin isolation. Consequently, unauthenticated HTTP image requests initiated by standard `<img src="...">` tags fail with `403 Forbidden` or load broken placeholder icons, because Google's CDN cannot access the user's ambient session cookies.
+- **The Solution**: Rather than attempting to make files publicly accessible (which strictly violates our security standard: *"No file is ever made publicly accessible"*), we implemented an authenticated backend image streaming proxy at `GET /api/drive/thumbnail/:fileId`. The Express backend utilizes the user's Bearer access token to fetch the raw image stream from `drive.files.get({ fileId, alt: 'media' }, { responseType: 'stream' })` and pipes it directly to the browser. On the frontend, `PhotoCard.jsx` invokes `fetchThumbnailBlob()` to retrieve the binary payload as a Blob and binds it via `URL.createObjectURL()`.
+- **The Trade-Off (Latency vs. Reliability)**:
+  - Streaming through the backend introduces a real network round-trip for every photo: `Browser -> Backend -> Google Drive API -> Backend -> Browser`.
+  - On the first gallery load, fetching each thumbnail independently adds visible latency (typically 1–3 seconds for multiple photos) compared to direct edge-cached CDN links.
+- **Mitigation in Place**:
+  - The backend thumbnail endpoint sets strict HTTP caching headers: `Cache-Control: private, max-age=3600`.
+  - Once loaded, repeat views or re-renders within the same browser session load instantly from the browser's disk/memory cache rather than re-fetching from Google Drive.
+  - To prevent client memory leaks, `PhotoCard.jsx` cleans up allocated object URLs on component unmount via `URL.revokeObjectURL(blobUrl)`.
+- **Engineering Rationale**: Reliability across all browsers and platforms was decisively prioritized over raw initial load speed. An image thumbnail that takes 1–2 seconds to render reliably is vastly superior to broken image error icons, and fully preserves the zero-public-access security model.
+
+---
+
+## 10. Proof of Sharing (su1@vr2.in)
 
 As required by Requirement 8 and Task 7:
 - Target Recipient: **`su1@vr2.in`**
@@ -246,6 +262,6 @@ As required by Requirement 8 and Task 7:
 
 ---
 
-## 10. Conclusion
+## 11. Conclusion
 
 Project X fulfills 100% of the functional and engineering requirements mandated by `AGENTS.md`. The codebase maintains a clean Git commit history using Conventional Commits, zero hardcoded secrets, robust error resilience, and high API efficiency.
