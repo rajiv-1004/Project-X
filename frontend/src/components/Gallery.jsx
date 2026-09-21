@@ -12,7 +12,7 @@ import styles from './Gallery.module.css';
  * A full re-fetch is triggered only after an upload (via onUpload callback
  * passed down from Dashboard in a later phase).
  */
-function Gallery({ onPhotoClick }) {
+function Gallery({ onPhotoClick, refreshTrigger }) {
   const { token } = useAuth();
   const [photos, setPhotos]   = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +33,9 @@ function Gallery({ onPhotoClick }) {
     }
   }, [token]);
 
-  useEffect(() => { fetchPhotos(); }, [fetchPhotos]);
+  useEffect(() => {
+    fetchPhotos();
+  }, [fetchPhotos, refreshTrigger]);
 
   if (loading) {
     return (

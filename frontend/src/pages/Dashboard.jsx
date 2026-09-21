@@ -14,6 +14,7 @@ function Dashboard() {
   const { user, logout } = useAuth();
   const [view, setView] = useState('gallery'); // 'gallery' | 'map'
   const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const openMap = (photo) => {
     setSelectedPhoto(photo);
@@ -23,6 +24,10 @@ function Dashboard() {
   const backToGallery = () => {
     setView('gallery');
     setSelectedPhoto(null);
+  };
+
+  const handleUploaded = () => {
+    setRefreshKey((k) => k + 1);
   };
 
   return (
@@ -52,8 +57,8 @@ function Dashboard() {
       <main className={styles.main}>
         {view === 'gallery' && (
           <>
-            <UploadButton />
-            <Gallery onPhotoClick={openMap} />
+            <UploadButton onUploaded={handleUploaded} />
+            <Gallery onPhotoClick={openMap} refreshTrigger={refreshKey} />
           </>
         )}
         {view === 'map' && (

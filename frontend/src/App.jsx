@@ -1,6 +1,12 @@
 import React from 'react';
 import { useAuth } from './context/AuthContext';
 
+// Lazy-load heavy views at module level — defining them inside the render
+// function would cause React to recreate the lazy component on every render,
+// which triggers a remount loop and a blank screen.
+const LoginPage = React.lazy(() => import('./pages/LoginPage'));
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+
 /**
  * App shell — renders login screen or the main dashboard
  * depending on authentication state.
@@ -20,12 +26,14 @@ function App() {
     );
   }
 
-  // Lazy-load heavy views to keep the initial bundle small
-  const LoginPage = React.lazy(() => import('./pages/LoginPage'));
-  const Dashboard = React.lazy(() => import('./pages/Dashboard'));
-
   return (
-    <React.Suspense fallback={<div className="app-loading"><div className="spinner" /></div>}>
+    <React.Suspense
+      fallback={
+        <div className="app-loading">
+          <div className="spinner" />
+        </div>
+      }
+    >
       {user ? <Dashboard /> : <LoginPage />}
     </React.Suspense>
   );
