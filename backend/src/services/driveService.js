@@ -14,6 +14,10 @@ import { Readable } from 'stream';
 
 const FOLDER_MIME = 'application/vnd.google-apps.folder';
 
+// In-session cache: maps user token/name -> { folderId, folderName }
+// Prevents redundant Drive API searches within the same session.
+const _folderCache = new Map();
+
 /**
  * Derive the canonical folder name for this user.
  * Falls back to 'ProjectX-Photos' only if the profile name is unavailable.
@@ -43,6 +47,11 @@ async function getUserFolderName(authClient) {
  * @returns {Promise<{ folderId: string, folderName: string }>}
  */
 export async function findOrCreateFolder(authClient) {
+  const cacheKey = authClient.credentials?.access_token;
+  if (cacheKey && _folderCache.has(cacheKey)) {
+    return _folderCache.get(cacheKey);
+  }
+
   const drive      = google.drive({ version: 'v3', auth: authClient });
   const folderName = await getUserFolderName(authClient);
 
@@ -56,8 +65,10 @@ export async function findOrCreateFolder(authClient) {
   });
 
   if (data.files?.length > 0) {
-    // Folder already exists — return its ID, no duplicate created
-    return { folderId: data.files[0].id, folderName };
+    // Folder already exists — cache and return its ID, no duplicate created
+    const result = { folderId: data.files[0].id, folderName };
+    if (cacheKey) _folderCache.set(cacheKey, result);
+    return result;
   }
 
   // If a legacy 'ProjectX-Photos' folder exists from earlier, rename it to the user's name
@@ -75,7 +86,9 @@ export async function findOrCreateFolder(authClient) {
         fileId: legacyId,
         requestBody: { name: folderName },
       });
-      return { folderId: legacyId, folderName };
+      const result = { folderId: legacyId, folderName };
+      if (cacheKey) _folderCache.set(cacheKey, result);
+      return result;
     }
   }
 
@@ -85,7 +98,9 @@ export async function findOrCreateFolder(authClient) {
     fields: 'id',
   });
 
-  return { folderId: newFolder.id, folderName };
+  const result = { folderId: newFolder.id, folderName };
+  if (cacheKey) _folderCache.set(cacheKey, result);
+  return result;
 }
 
 /**

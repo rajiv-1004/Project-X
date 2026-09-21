@@ -13,6 +13,10 @@ import { google } from 'googleapis';
 
 const SHEET_NAME = 'GPS Log';
 
+// In-session cache: folderId -> spreadsheetId
+// Avoids repeated Drive file search calls for the spreadsheet within the same session.
+const _sheetCache = new Map();
+
 /**
  * Find the GPS Log Sheet inside the user's folder, or create it if absent.
  * Guaranteed to never produce duplicates.
@@ -22,6 +26,10 @@ const SHEET_NAME = 'GPS Log';
  * @returns {Promise<string>} The Spreadsheet ID
  */
 export async function findOrCreateSheet(authClient, folderId) {
+  if (_sheetCache.has(folderId)) {
+    return _sheetCache.get(folderId);
+  }
+
   const drive = google.drive({ version: 'v3', auth: authClient });
 
   // Search for an existing Sheet with this name in the folder (not trashed)
@@ -32,7 +40,9 @@ export async function findOrCreateSheet(authClient, folderId) {
   });
 
   if (data.files?.length > 0) {
-    return data.files[0].id;
+    const id = data.files[0].id;
+    _sheetCache.set(folderId, id);
+    return id;
   }
 
   // Create the spreadsheet inside the folder
@@ -69,6 +79,7 @@ export async function findOrCreateSheet(authClient, folderId) {
     fields: 'id, parents',
   });
 
+  _sheetCache.set(folderId, sheetFileId);
   return sheetFileId;
 }
 
