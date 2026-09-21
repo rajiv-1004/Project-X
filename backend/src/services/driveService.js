@@ -168,18 +168,17 @@ export async function listPhotosFromDrive(authClient, folderId) {
  * @param {string} fileId
  * @param {string} emailAddress - Target Google account
  */
-export async function grantDrivePermission(authClient, fileId, emailAddress) {
+export async function grantDrivePermission(authClient, fileId, emailAddress, role = 'writer', sendNotificationEmail = false) {
   const drive = google.drive({ version: 'v3', auth: authClient });
 
   await drive.permissions.create({
     fileId,
     requestBody: {
       type:         'user',
-      role:         'writer',
+      role:         role === 'reader' ? 'reader' : 'writer',
       emailAddress,
     },
-    // Set to true if you want the target to receive an email notification
-    sendNotificationEmail: false,
+    sendNotificationEmail: Boolean(sendNotificationEmail),
   });
 }
 

@@ -12,6 +12,7 @@ import {
   findOrCreateSheet,
   logToSheet,
   getGpsDataFromSheet,
+  getSheetData,
 } from '../services/sheetsService.js';
 
 const router = express.Router();
@@ -49,6 +50,27 @@ router.post('/folder', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('[drive/folder]', err.message ?? err);
     return res.status(502).json({ error: 'Could not access your Drive folder.' });
+  }
+});
+
+// ─── GET /api/drive/info ──────────────────────────────────────────────────────
+/**
+ * Return Drive folder and Sheet info (name, id, links) for dashboard/settings.
+ */
+router.get('/info', requireAuth, async (req, res) => {
+  try {
+    const { folderId, folderName } = await findOrCreateFolder(req.authClient);
+    const sheetId = await findOrCreateSheet(req.authClient, folderId);
+    return res.json({
+      folderId,
+      folderName,
+      sheetId,
+      folderUrl: `https://drive.google.com/drive/folders/${folderId}`,
+      sheetUrl: `https://docs.google.com/spreadsheets/d/${sheetId}`,
+    });
+  } catch (err) {
+    console.error('[drive/info]', err.message ?? err);
+    return res.status(502).json({ error: 'Could not fetch Drive info.' });
   }
 });
 
@@ -136,18 +158,34 @@ router.get('/photos', requireAuth, async (req, res) => {
  */
 router.post('/share/:fileId', requireAuth, async (req, res) => {
   const { fileId } = req.params;
-  const { emailAddress } = req.body ?? {};
+  const { emailAddress, role, notify } = req.body ?? {};
 
   if (!emailAddress || typeof emailAddress !== 'string' || !emailAddress.includes('@')) {
     return res.status(400).json({ error: 'A valid email address is required.' });
   }
 
   try {
-    await grantDrivePermission(req.authClient, fileId, emailAddress.trim());
+    await grantDrivePermission(req.authClient, fileId, emailAddress.trim(), role, notify);
     return res.status(204).end();
   } catch (err) {
     console.error('[drive/share]', err.message ?? err);
     return res.status(502).json({ error: 'Sharing failed. Please check the email and try again.' });
+  }
+});
+
+// ─── GET /api/drive/sheet ─────────────────────────────────────────────────────
+/**
+ * Return real Google Sheet metadata and rows for the user's GPS log spreadsheet.
+ */
+router.get('/sheet', requireAuth, async (req, res) => {
+  try {
+    const { folderId } = await findOrCreateFolder(req.authClient);
+    const sheetId = await findOrCreateSheet(req.authClient, folderId);
+    const sheetData = await getSheetData(req.authClient, sheetId);
+    return res.json(sheetData);
+  } catch (err) {
+    console.error('[drive/sheet]', err.message ?? err);
+    return res.status(502).json({ error: 'Could not load Google Sheet data.' });
   }
 });
 

@@ -139,3 +139,25 @@ export async function getGpsDataFromSheet(authClient, spreadsheetId) {
 
   return gpsMap;
 }
+
+/**
+ * Read the full Sheet data including rows and web URL.
+ *
+ * @param {import('googleapis').Auth.OAuth2Client} authClient
+ * @param {string} spreadsheetId
+ * @returns {Promise<{ spreadsheetId: string, spreadsheetUrl: string, rows: string[][] }>}
+ */
+export async function getSheetData(authClient, spreadsheetId) {
+  const sheets = google.sheets({ version: 'v4', auth: authClient });
+
+  const [metaRes, valRes] = await Promise.all([
+    sheets.spreadsheets.get({ spreadsheetId, fields: 'spreadsheetUrl' }).catch(() => ({ data: {} })),
+    sheets.spreadsheets.values.get({ spreadsheetId, range: 'Locations!A:E' }),
+  ]);
+
+  return {
+    spreadsheetId,
+    spreadsheetUrl: metaRes.data.spreadsheetUrl || `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`,
+    rows: valRes.data.values ?? [],
+  };
+}

@@ -48,14 +48,34 @@ export async function listPhotos(token) {
  * @param {string} fileId       - Drive file ID
  * @param {string} emailAddress - Target Google account
  * @param {string} token        - Session token
+ * @param {string} [role='writer'] - 'reader' or 'writer'
+ * @param {boolean} [notify=false] - send notification email
  * @returns {Promise<void>}
  */
-export async function sharePhoto(fileId, emailAddress, token) {
+export async function sharePhoto(fileId, emailAddress, token, role = 'writer', notify = false) {
   return apiRequest(
     `/api/drive/share/${fileId}`,
-    { method: 'POST', body: JSON.stringify({ emailAddress }) },
+    { method: 'POST', body: JSON.stringify({ emailAddress, role, notify }) },
     token
   );
+}
+
+/**
+ * Fetch real Google Sheet metadata and rows.
+ * @param {string} token - Session token
+ * @returns {Promise<{ spreadsheetId: string, spreadsheetUrl: string, rows: string[][] }>}
+ */
+export async function fetchSheetData(token) {
+  return apiRequest('/api/drive/sheet', {}, token);
+}
+
+/**
+ * Fetch Drive folder and Sheet info (name, IDs, links).
+ * @param {string} token - Session token
+ * @returns {Promise<{ folderId: string, folderName: string, sheetId: string, folderUrl: string, sheetUrl: string }>}
+ */
+export async function fetchDriveInfo(token) {
+  return apiRequest('/api/drive/info', {}, token);
 }
 
 /**
