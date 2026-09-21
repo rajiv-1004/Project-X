@@ -8,36 +8,36 @@ import { apiRequest } from './api';
  */
 
 /**
- * Ensure the user's Drive folder exists (backend creates if missing).
- * @param {string} token - Session token
- * @returns {Promise<{ folderId: string }>}
- */
-export async function ensureFolder(token) {
-  return apiRequest('/api/drive/folder', { method: 'POST' }, token);
-}
-
-/**
  * Upload a photo File to the user's Drive folder.
+ * GPS coordinates (if extracted client-side) are included in the FormData
+ * so the backend can log them to the Sheet in the same request.
+ *
+ * The backend's /upload endpoint calls findOrCreateFolder internally, so we
+ * do NOT need a separate ensureFolder call before uploading — that would be
+ * a redundant API round-trip.
+ *
  * @param {File}   file  - The photo file object
  * @param {string} token - Session token
- * @returns {Promise<{ fileId: string, name: string, webViewLink: string, gps: object|null }>}
+ * @param {{ latitude: number, longitude: number }|null} gps - GPS from exifr
+ * @returns {Promise<{ fileId: string, name: string, webViewLink: string, thumbnailLink: string, lat: number|null, lng: number|null }>}
  */
-export async function uploadPhoto(file, token) {
+export async function uploadPhoto(file, token, gps = null) {
   const formData = new FormData();
   formData.append('photo', file);
 
-  // Do NOT set Content-Type here — browser sets it with the correct boundary
-  return apiRequest(
-    '/api/drive/upload',
-    { method: 'POST', body: formData, headers: {} },
-    token
-  );
+  // Append GPS only when present; backend treats missing fields as null
+  if (gps?.latitude != null) formData.append('lat', String(gps.latitude));
+  if (gps?.longitude != null) formData.append('lng', String(gps.longitude));
+
+  // Do NOT pass custom Content-Type header — apiRequest detects FormData
+  // and lets the browser set the correct multipart boundary automatically.
+  return apiRequest('/api/drive/upload', { method: 'POST', body: formData }, token);
 }
 
 /**
  * Fetch all photos from the user's Drive folder (metadata + GPS from Sheet).
  * @param {string} token - Session token
- * @returns {Promise<Array<{ fileId, name, thumbnailLink, webViewLink, lat, lng, timestamp }>>}
+ * @returns {Promise<Array<{ fileId, name, thumbnailLink, webViewLink, lat, lng }>>}
  */
 export async function listPhotos(token) {
   return apiRequest('/api/drive/photos', {}, token);

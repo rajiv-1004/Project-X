@@ -17,9 +17,14 @@ const BASE_URL = import.meta.env.VITE_BACKEND_URL ?? '';
  * @throws {Error}               - with a user-friendly message; technical detail is dev-logged
  */
 export async function apiRequest(path, options = {}, token = null) {
+  // Do NOT set Content-Type for FormData — the browser must set it with the
+  // correct multipart boundary. For all other bodies default to JSON.
+  const isFormData = options.body instanceof FormData;
+
   const headers = {
-    'Content-Type': 'application/json',
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    // Caller-supplied headers override the defaults above
     ...options.headers,
   };
 

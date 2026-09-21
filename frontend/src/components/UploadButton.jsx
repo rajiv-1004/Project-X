@@ -1,19 +1,20 @@
 import React, { useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { uploadPhoto, ensureFolder } from '../services/driveService';
+import { uploadPhoto } from '../services/driveService';
 import { extractGPS } from '../utils/exifUtils';
 import { validateImageFile } from '../utils/fileUtils';
 import styles from './UploadButton.module.css';
 
 /**
  * UploadButton — handles the full upload flow:
- *  1. Validate file type and size
- *  2. Extract GPS EXIF client-side
- *  3. Ensure the user's Drive folder exists
- *  4. POST the file + GPS coords to the backend
+ *  1. Validate file type and size client-side before anything hits the network.
+ *  2. Extract GPS EXIF client-side using exifr (gracefully handles missing EXIF).
+ *  3. POST the file + GPS coords to the backend in a single FormData request.
+ *     The backend's /upload endpoint ensures the Drive folder exists internally,
+ *     so there is no separate ensureFolder round-trip here.
  *
- * GPS is extracted before upload so the backend can log it to Sheets
- * in the same request, avoiding a second round-trip.
+ * GPS is extracted before upload so the backend can log it to Sheets in the
+ * same request, avoiding a second round-trip.
  */
 function UploadButton({ onUploaded }) {
   const { token } = useAuth();
@@ -30,25 +31,22 @@ function UploadButton({ onUploaded }) {
     setError(null);
     setSuccess(null);
 
-    // 1. Validate before doing anything
+    // 1. Validate type and size before doing anything
     const { valid, error: validErr } = validateImageFile(file);
     if (!valid) { setError(validErr); return; }
 
     setUploading(true);
     try {
-      // 2. Extract GPS client-side (non-blocking — continues even if null)
+      // 2. Extract GPS client-side (null if EXIF is absent or corrupt)
       const gps = await extractGPS(file);
 
-      // 3. Ensure folder exists (backend is idempotent — no duplicates)
-      await ensureFolder(token);
-
-      // 4. Upload; backend receives the file and the GPS data in FormData
+      // 3. Upload — backend handles folder creation and Sheet logging internally
       const result = await uploadPhoto(file, token, gps);
       setSuccess(`"${result.name}" uploaded successfully.`);
       if (onUploaded) onUploaded(result);
     } catch (err) {
       if (import.meta.env.DEV) console.error('[UploadButton] upload error:', err);
-      setError('We couldn\'t upload this photo. Please check your connection and try again.');
+      setError("We couldn't upload this photo. Please check your connection and try again.");
     } finally {
       setUploading(false);
       // Clear the input so the same file can be re-selected after an error
@@ -79,7 +77,7 @@ function UploadButton({ onUploaded }) {
         {uploading ? 'Uploading…' : '+ Upload Photo'}
       </button>
 
-      {error && <p className={styles.error} role="alert">{error}</p>}
+      {error   && <p className={styles.error}   role="alert">{error}</p>}
       {success && <p className={styles.success} role="status">{success}</p>}
     </div>
   );
