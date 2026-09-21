@@ -188,7 +188,7 @@ export async function grantDrivePermission(authClient, fileId, emailAddress) {
  *
  * @param {import('googleapis').Auth.OAuth2Client} authClient
  * @param {string} fileId
- * @returns {Promise<import('axios').AxiosResponse>}
+ * @returns {Promise<import('gaxios').GaxiosResponse<import('stream').Readable>>}
  */
 export async function getPhotoStream(authClient, fileId) {
   const drive = google.drive({ version: 'v3', auth: authClient });
