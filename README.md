@@ -19,10 +19,9 @@ A React + Node.js application that lets users sign in with Google, upload photos
 2. Enable the following APIs:
    - **Google Drive API**
    - **Google Sheets API**
-   - **People API**
 3. Create an **OAuth 2.0 Client ID** (type: *Web application*):
    - Authorised JavaScript origin: `http://localhost:5173`
-   - Authorised redirect URI: `http://localhost:4000/auth/google/callback`
+   - Authorised redirect URI: `postmessage` (used by `@react-oauth/google` authorization-code flow)
 4. Copy the **Client ID** and **Client Secret**.
 
 ---
@@ -48,7 +47,7 @@ Fill in `backend/.env`:
 ```
 GOOGLE_CLIENT_ID=<your client id>
 GOOGLE_CLIENT_SECRET=<your client secret>
-GOOGLE_REDIRECT_URI=http://localhost:4000/auth/google/callback
+GOOGLE_REDIRECT_URI=postmessage
 PORT=4000
 ```
 
