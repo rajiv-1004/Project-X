@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { sharePhoto } from '../services/driveService';
+import { sharePhoto, fetchThumbnailBlob } from '../services/driveService';
 import { formatCoordinates } from '../utils/exifUtils';
 import styles from './PhotoCard.module.css';
 
@@ -11,10 +11,35 @@ import styles from './PhotoCard.module.css';
  */
 function PhotoCard({ photo, onClick }) {
   const { token } = useAuth();
-  const [sharing, setSharing]     = useState(false);
+  const [imgSrc, setImgSrc]         = useState(photo.thumbnailLink || null);
+  const [sharing, setSharing]       = useState(false);
   const [shareEmail, setShareEmail] = useState('');
   const [shareState, setShareState] = useState('idle'); // 'idle' | 'open' | 'loading' | 'done' | 'error'
   const [shareError, setShareError] = useState(null);
+
+  // Load authenticated image blob to bypass Google Drive's third-party cookie restrictions
+  useEffect(() => {
+    let active = true;
+    let blobUrl = null;
+
+    if (photo.fileId && token) {
+      fetchThumbnailBlob(photo.fileId, token)
+        .then((url) => {
+          if (active) {
+            blobUrl = url;
+            setImgSrc(url);
+          }
+        })
+        .catch(() => {
+          // Keep photo.thumbnailLink as fallback
+        });
+    }
+
+    return () => {
+      active = false;
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
+  }, [photo.fileId, token]);
 
   const handleShare = async (e) => {
     e.preventDefault();
@@ -45,12 +70,18 @@ function PhotoCard({ photo, onClick }) {
         disabled={!hasGPS}
         title={hasGPS ? 'Click to view on map' : 'No GPS data for this photo'}
       >
-        <img
-          src={photo.thumbnailLink}
-          alt={photo.name}
-          className={styles.thumb}
-          loading="lazy"
-        />
+        {imgSrc ? (
+          <img
+            src={imgSrc}
+            alt={photo.name}
+            className={styles.thumb}
+            loading="lazy"
+          />
+        ) : (
+          <div className={styles.thumb} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', color: '#888' }}>
+            📸
+          </div>
+        )}
         {!hasGPS && <span className={styles.noGpsBadge}>No GPS</span>}
       </button>
 

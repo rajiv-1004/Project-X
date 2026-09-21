@@ -6,6 +6,7 @@ import {
   uploadFileToDrive,
   listPhotosFromDrive,
   grantDrivePermission,
+  getPhotoStream,
 } from '../services/driveService.js';
 import {
   findOrCreateSheet,
@@ -147,6 +148,26 @@ router.post('/share/:fileId', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('[drive/share]', err.message ?? err);
     return res.status(502).json({ error: 'Sharing failed. Please check the email and try again.' });
+  }
+});
+
+// ─── GET /api/drive/thumbnail/:fileId ─────────────────────────────────────────
+/**
+ * Stream image content for private Drive files.
+ * Avoids Google CDN third-party cookie blocking in modern browsers.
+ */
+router.get('/thumbnail/:fileId', requireAuth, async (req, res) => {
+  const { fileId } = req.params;
+  try {
+    const response = await getPhotoStream(req.authClient, fileId);
+    if (response.headers['content-type']) {
+      res.setHeader('Content-Type', response.headers['content-type']);
+    }
+    res.setHeader('Cache-Control', 'private, max-age=3600');
+    return response.data.pipe(res);
+  } catch (err) {
+    console.error('[drive/thumbnail]', err.message ?? err);
+    return res.status(404).end();
   }
 });
 

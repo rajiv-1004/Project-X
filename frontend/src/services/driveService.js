@@ -57,3 +57,19 @@ export async function sharePhoto(fileId, emailAddress, token) {
     token
   );
 }
+
+/**
+ * Fetch authenticated image blob URL for private Drive files.
+ * @param {string} fileId
+ * @param {string} token
+ * @returns {Promise<string>} Blob URL
+ */
+export async function fetchThumbnailBlob(fileId, token) {
+  const backendUrl = import.meta.env.VITE_BACKEND_URL ?? 'http://localhost:4000';
+  const res = await fetch(`${backendUrl}/api/drive/thumbnail/${fileId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Thumbnail fetch failed');
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+}
