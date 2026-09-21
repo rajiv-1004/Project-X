@@ -134,30 +134,97 @@ In accordance with Section 7 of `AGENTS.md`, the AI-assisted collaboration histo
 
 ---
 
-## 6. Optimization & Engineering Standards
+## 6. Engineering Standards Compliance
 
-### 1. API Efficiency & Minimizing Calls
+This section provides concrete, verifiable evidence from the codebase demonstrating strict compliance with the core engineering standards mandated in `AGENTS.md` Section 4.
+
+### 1. No Hardcoding
+- **Zero Hardcoded Secrets or IDs**: No client IDs, client secrets, redirect URIs, spreadsheet IDs, folder IDs, or port numbers exist as hardcoded literals in source code.
+  - Server config is completely driven by environment variables (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `PORT`) via `process.env` in [`backend/src/config/googleClient.js`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/backend/src/config/googleClient.js) lines 22–34.
+  - Frontend config is driven by Vite environment variables (`VITE_GOOGLE_CLIENT_ID`, `VITE_BACKEND_URL`) in [`frontend/src/services/api.js`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/frontend/src/services/api.js) line 3.
+- **Dynamic Folder Naming**: The user's Google Drive folder name is never hardcoded. It is resolved dynamically at runtime from the authenticated Google user profile (`data.name` in [`backend/src/services/driveService.js`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/backend/src/services/driveService.js) lines 32–37).
+- **Literal Fallback String Justification**: The single literal string `'ProjectX-Photos'` in [`backend/src/services/driveService.js`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/backend/src/services/driveService.js) line 41 is a documented defensive fallback triggered *only* when Google's profile API returns an empty display name. Furthermore, lines 78–96 specifically contain migration logic to detect and rename any legacy `'ProjectX-Photos'` folder to the user's actual profile name, preventing duplicate folders and preserving existing files.
+
+### 2. Lightweight Dependencies
+The application eliminates all unnecessary dependencies, component libraries, and heavy SDKs. Both `package.json` files contain only the strictly necessary packages:
+
+#### Frontend Dependencies (`frontend/package.json`)
+- `@react-oauth/google` (`^0.12.1`): Official Google Identity Services SDK wrapper to implement authorization-code OAuth flow cleanly in React.
+- `exifr` (`^7.1.3`): Lightweight, high-performance EXIF reader that parses only binary header segments directly in the browser (`exifr.gps()`) without decoding entire image bitmaps or loading canvas elements.
+- `leaflet` (`^1.9.4`) & `react-leaflet` (`^4.2.1`): Zero-cost OpenStreetMap tile rendering. Avoids proprietary, billing-required SDKs like Google Maps.
+- `react` (`^18.3.1`) & `react-dom` (`^18.3.1`): Core React SPA library.
+- *Styling*: 100% plain CSS Modules — zero UI component libraries (no MUI, Chakra, or Ant) and no heavy utility runtimes.
+- *State Management*: Pure React Hooks and Context (`AuthContext.jsx`) — no Redux or external state stores.
+
+#### Backend Dependencies (`backend/package.json`)
+- `express` (`^4.19.2`): Minimalist Node.js HTTP framework acting as a lightweight gateway to hold secrets server-side.
+- `cors` (`^2.8.5`): Manages CORS headers between localhost:5173 and localhost:4000.
+- `dotenv` (`^16.4.5`): Parses local `.env` files into `process.env`.
+- `googleapis` (`^140.0.1`): Official Google client for OAuth2 token exchange, Drive v3 API, and Sheets v4 API calls.
+- `multer` (`^2.4.0`): Handles in-memory multipart buffer streams directly to Google Drive without touching local disk.
+- *Audited & Removed*: `axios` was audited, verified as completely unused, and uninstalled (`npm uninstall axios`).
+
+### 3. Production-Style Architecture
+The codebase enforces clear separation of concerns across dedicated architectural layers:
+- `backend/src/config/`: [`googleClient.js`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/backend/src/config/googleClient.js) encapsulates OAuth2 client instantiation and token injection.
+- `backend/src/routes/`: Route handlers ([`auth.js`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/backend/src/routes/auth.js), [`drive.js`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/backend/src/routes/drive.js)) only parse requests, invoke services, and return standard JSON HTTP responses.
+- `backend/src/services/`: Pure business and API logic ([`driveService.js`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/backend/src/services/driveService.js), [`sheetsService.js`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/backend/src/services/sheetsService.js)) containing folder deduplication, streaming upload, sheet row appending, and in-session caching.
+- `frontend/src/context/`: [`AuthContext.jsx`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/frontend/src/context/AuthContext.jsx) encapsulates user session and in-memory token state.
+- `frontend/src/services/`: Network clients ([`api.js`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/frontend/src/services/api.js), [`driveService.js`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/frontend/src/services/driveService.js)) separating HTTP communication from UI components.
+- `frontend/src/utils/`: Pure helper functions ([`fileUtils.js`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/frontend/src/utils/fileUtils.js), [`exifUtils.js`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/frontend/src/utils/exifUtils.js)).
+- `frontend/src/components/`: Reusable presentation components ([`Gallery.jsx`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/frontend/src/components/Gallery.jsx), [`PhotoCard.jsx`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/frontend/src/components/PhotoCard.jsx), [`UploadButton.jsx`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/frontend/src/components/UploadButton.jsx), [`MapView.jsx`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/frontend/src/components/MapView.jsx)).
+- `frontend/src/pages/`: Page orchestrators ([`LoginPage.jsx`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/frontend/src/pages/LoginPage.jsx), [`Dashboard.jsx`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/frontend/src/pages/Dashboard.jsx)).
+
+### 4. Validation
+- **Client-Side File Validation** ([`frontend/src/utils/fileUtils.js`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/frontend/src/utils/fileUtils.js) lines 10–26):
+  - Checks for null/missing file.
+  - Enforces allowed MIME types (`image/jpeg`, `image/png`, `image/webp`, `image/heic`, `image/heif`).
+  - Enforces max size limit (20 MB). Rejects invalid files immediately before network transfer begins.
+- **Server-Side File Validation** ([`backend/src/routes/drive.js`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/backend/src/routes/drive.js) lines 21 & 66–68):
+  - Multer limits `fileSize: 20 * 1024 * 1024`.
+  - Handler validates `req.file` exists, returning HTTP 400 (`'No photo file received.'`).
+- **Sharing Email Validation**:
+  - Client-side: [`PhotoCard.jsx`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/frontend/src/components/PhotoCard.jsx) line 110 uses HTML5 input type `email`, required attribute, and `shareEmail.trim()`.
+  - Server-side: [`backend/src/routes/drive.js`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/backend/src/routes/drive.js) lines 140–142 explicitly validates `!emailAddress || typeof emailAddress !== 'string' || !emailAddress.includes('@')`, returning HTTP 400 (`'A valid email address is required.'`).
+
+### 5. Error Handling & Information Hiding
+- **Try/Catch on Every Route**: All asynchronous route handlers in `backend/src/routes/auth.js` and `backend/src/routes/drive.js` wrap Google API invocations in `try/catch` blocks.
+- **Strict Information Hiding**: Technical details, stack traces, and Google API error objects are logged to server console only (`console.error`). Clients receive safe, friendly messages:
+  - Auth failure: `"Authentication failed. Please try again."`
+  - Upload failure: `"We couldn't upload this photo. Please try again."`
+  - Drive access failure: `"Could not access your Drive folder."`
+  - Share failure: `"Sharing failed. Please check the email and try again."`
+- **Global Fallback Error Handler**: [`backend/src/index.js`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/backend/src/index.js) lines 28–34 catches any unhandled exceptions as a final safety net:
+  ```javascript
+  // ─── Error handler ────────────────────────────────────────────────────────────
+  // eslint-disable-next-line no-unused-vars
+  app.use((err, _req, res, _next) => {
+    // Log technical details server-side only — never sent to client
+    console.error('[server] unhandled error:', err.message ?? err);
+    res.status(500).json({ error: 'An unexpected error occurred.' });
+  });
+  ```
+
+### 6. Clean Code
+- **Zero Leftover Debugging Logs**: A global codebase audit confirmed no temporary debug `console.log()` calls remain. Only one intentional server startup log exists in [`backend/src/index.js`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/backend/src/index.js) line 37 (`[server] listening on http://localhost:${PORT}`).
+- **High-Value Comments**: Comments in the codebase focus strictly on architectural rationale, security guarantees, and edge-case handling rather than restating code:
+  - In `googleClient.js`: explains why per-request client instances prevent credential race conditions across concurrent requests.
+  - In `driveService.js`: documents why duplicate checking uses exact name and MIME filters before creation.
+  - In `PhotoCard.jsx`: documents authenticated blob URL loading and `URL.revokeObjectURL()` memory cleanup.
+
+---
+
+## 7. Optimization & API Efficiency
+
+### 1. Minimizing Calls
 - **In-Session Folder Caching**: Implemented `_folderCache` (`Map`) on the backend. Once the user's folder is resolved, subsequent uploads and photo queries bypass Drive folder search queries.
 - **In-Session Sheet Caching**: Implemented `_sheetCache` (`Map`) to cache the `spreadsheetId` by `folderId`.
 - **Parallel Fetching**: `GET /api/drive/photos` executes `listPhotosFromDrive` and `getGpsDataFromSheet` concurrently via `Promise.all`.
 - **Batch EXIF Join**: Reads all sheet rows once and generates an in-memory dictionary `gpsMap[fileName]` for O(1) coordinate joins instead of N individual API queries.
 
-### 2. Lightweight Dependency Selection
-| Selected Library | Reason for Selection | Avoided Library & Reason |
-|---|---|---|
-| `react-leaflet` + `leaflet` | Free, lightweight, zero billing, OpenStreetMap tiles | Google Maps API (requires billing and heavy SDK) |
-| `exifr` | Ultra-fast, client-side, parses only EXIF headers | ExifReader / canvas decoders (unnecessary bundle bloat) |
-| Plain CSS Modules | Scoped styling, zero runtime overhead, native CSS | Tailwind / MUI / Chakra (heavy runtime / build dependencies) |
-| React Context | Clean, built-in state management | Redux / Zustand (unnecessary boilerplate for SPA) |
-
-### 3. Error Handling & Validation
-- **Client-Side File Validation**: Validates MIME type (`image/jpeg, image/png, image/webp, image/heic`) and file size (≤ 20 MB) before network transmission.
-- **Non-Fatal Graceful Degradation**: If Google Sheet logging encounters a transient failure, the photo upload still completes and returns success to the user.
-- **Sanitized UI Errors**: Internal stack traces and Google API error payloads are logged server-side only; users receive actionable messages (e.g. *"We couldn't upload this photo. Please check your connection and try again."*).
-
 ---
 
-## 7. Edge Cases Handled
+## 8. Edge Cases Handled
 
 | Edge Case | Solution & Handling |
 |---|---|
@@ -169,7 +236,7 @@ In accordance with Section 7 of `AGENTS.md`, the AI-assisted collaboration histo
 
 ---
 
-## 8. Proof of Sharing (su1@vr2.in)
+## 9. Proof of Sharing (su1@vr2.in)
 
 As required by Requirement 8 and Task 7:
 - Target Recipient: **`su1@vr2.in`**
@@ -179,6 +246,6 @@ As required by Requirement 8 and Task 7:
 
 ---
 
-## 9. Conclusion
+## 10. Conclusion
 
 Project X fulfills 100% of the functional and engineering requirements mandated by `AGENTS.md`. The codebase maintains a clean Git commit history using Conventional Commits, zero hardcoded secrets, robust error resilience, and high API efficiency.
