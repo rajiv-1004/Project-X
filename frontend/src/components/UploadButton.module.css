@@ -1,0 +1,36 @@
+/* UploadButton.module.css */
+
+.wrapper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.hiddenInput { display: none; }
+
+.btn {
+  padding: 0.6rem 1.4rem;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition), opacity var(--transition);
+}
+
+.btn:hover:not(:disabled) { background: var(--color-primary-h); }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.error {
+  color: var(--color-error);
+  font-size: 0.85rem;
+}
+
+.success {
+  color: var(--color-success);
+  font-size: 0.85rem;
+}
