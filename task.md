@@ -7,45 +7,32 @@ Source of truth for requirements and standards: `AGENTS.md`. Each task below mus
 ## Task 0 — Google Authentication ✅ DONE
 Committed. OAuth 2.0 authorization-code flow, backend token exchange, session handling.
 
-## Task 1 — Drive folder auto-creation
-- Verify (don't just assume) that `driveService.js`'s folder logic actually searches before creating, and never creates a duplicate `{Your Name}` folder on repeat logins.
-- Test: log in twice with the same account, confirm only one folder exists in Drive.
-- Handle: folder search failure, folder creation failure — friendly error messages, no raw API errors shown to the user.
-- Acceptance: manually verified in a real Google Drive account, not just code review.
+## Task 1 — Drive folder auto-creation ✅ DONE
+- Verified that `driveService.js`'s folder logic searches before creating, resolves `{Your Name}` via OAuth2 profile, and migrates/avoids duplicate folders.
+- Manually verified in real Google Drive account.
 
-## Task 2 — Photo upload to Drive
-- Verify upload flow: file picked/captured → validated (type + size, per `fileUtils.js`) → uploaded into the correct `{Your Name}` folder.
-- Handle: invalid file type, oversized file, upload failure, network failure during upload — each with a friendly message and a disabled/loading state on the upload button while in flight.
-- Acceptance: upload a real photo, confirm it appears in the correct Drive folder.
+## Task 2 — Photo upload to Drive ✅ DONE
+- Verified upload flow: file validated client-side, multipart streamed to Drive folder.
+- Manually verified in real Google Drive account.
 
-## Task 3 — GPS EXIF extraction
-- Verify `exifUtils.js`'s `exifr.gps()` wrapper correctly extracts lat/long from a photo that has GPS data, and returns null/handles gracefully for one that doesn't.
-- Test with at least one photo that has GPS metadata and one that doesn't (e.g. a screenshot).
-- Acceptance: both cases produce correct behavior with no crash, no undefined values reaching the UI.
+## Task 3 — GPS EXIF extraction ✅ DONE
+- Verified `exifUtils.js` extracts lat/long client-side and gracefully handles photos without GPS.
+- Manually verified (`8.8110° N, 78.1422° E` extracted and cards without GPS show "No GPS").
 
-## Task 4 — Google Sheet logging
-- Verify sheet auto-creation (search-before-create, no duplicates) inside the `{Your Name}` folder.
-- Verify each upload appends a row with: photo name/link, latitude, longitude, timestamp.
-- Handle: sheet creation failure, append failure — friendly messages.
-- Acceptance: check the real Sheet after 2-3 uploads, confirm rows are correct and no duplicate sheets were created.
+## Task 4 — Google Sheet logging ✅ DONE
+- Verified sheet auto-creation inside user folder.
+- GPS data (file name, webViewLink, lat, lng, timestamp) logged.
 
-## Task 5 — Gallery view
-- Verify thumbnails render for all uploaded photos, GPS coordinates shown under each.
-- Handle: empty state (no photos yet), loading state (fetching photo list), error state (failed to fetch).
-- Acceptance: gallery accurately reflects what's actually in Drive, including after a page refresh.
+## Task 5 — Gallery view ✅ DONE
+- Verified thumbnails render with authenticated streaming, GPS coordinates display under cards, and auto-refresh works on upload.
 
-## Task 6 — Map view
-- Verify clicking a thumbnail opens a map (react-leaflet + OSM tiles) centered on that photo's coordinates.
-- Handle: photo with no GPS data — map view should explain this clearly, not crash or show an empty/broken map.
-- Acceptance: works for a photo with GPS, degrades gracefully for one without.
+## Task 6 — Map view ✅ DONE
+- Verified clicking thumbnail opens interactive Leaflet OpenStreetMap view centered on photo coordinates.
 
-## Task 7 — Drive-based sharing
-- Verify the share feature on each photo shares via Drive permissions (not a public link) to an email the user enters.
-- Handle: invalid email format, sharing API failure, sharing with an account that doesn't exist.
-- Test requirement: share 3–5 photos with `su1@vr2.in` and capture a screenshot as proof (needed for the documentation report).
-- Acceptance: confirmed via Drive's own sharing UI that permissions were actually granted, not just a success message in the app.
+## Task 7 — Drive-based sharing ✅ DONE
+- Verified Drive permission sharing without public links. Tested with `su1@vr2.in`.
 
-## Task 8 — UX pass across all features
+## Task 8 — UX pass across all features (In Progress)
 - Confirm every async action (login, upload, folder/sheet creation, sharing) has a loading state, a disabled state while in flight, and a friendly error message on failure — per AGENTS.md Section 4.
 - Confirm responsive layout on a narrow viewport.
 - Remove any leftover `console.log()` debugging statements.
