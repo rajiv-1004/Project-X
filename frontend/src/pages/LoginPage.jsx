@@ -9,13 +9,16 @@ import styles from './LoginPage.module.css';
  * Preserves the exact authorization-code flow and backend exchange.
  */
 function LoginPage() {
-  const { login, setLoading } = useAuth();
+  const { login, setLoading, sessionError, setSessionError } = useAuth();
   const [error, setError] = useState(null);
   const [signingIn, setSigningIn] = useState(false);
+
+  const activeError = error || sessionError;
 
   const handleSuccess = useCallback(async ({ code }) => {
     setSigningIn(true);
     setError(null);
+    if (setSessionError) setSessionError(null);
     setLoading(true);
     try {
       const { token, user } = await exchangeCodeForSession(code);
@@ -70,9 +73,9 @@ function LoginPage() {
           Upload photos, extract location, and keep everything organized in your Google Drive.
         </p>
 
-        {error && (
+        {activeError && (
           <div className={styles.errorBanner} role="alert">
-            {error}
+            {activeError}
           </div>
         )}
 
@@ -80,7 +83,12 @@ function LoginPage() {
           <button
             id="google-signin-btn"
             className={styles.googleBtn}
-            onClick={() => { setSigningIn(true); triggerLogin(); }}
+            onClick={() => {
+              setError(null);
+              if (setSessionError) setSessionError(null);
+              setSigningIn(true);
+              triggerLogin();
+            }}
             disabled={signingIn}
             aria-busy={signingIn}
           >

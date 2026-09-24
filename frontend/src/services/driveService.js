@@ -1,4 +1,4 @@
-import { apiRequest } from './api';
+import { apiRequest, notifyUnauthorized } from './api';
 
 /**
  * driveService.js — all Drive and Sheets interactions go through the backend.
@@ -89,6 +89,10 @@ export async function fetchThumbnailBlob(fileId, token) {
   const res = await fetch(`${backendUrl}/api/drive/thumbnail/${fileId}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
+  if (res.status === 401) {
+    notifyUnauthorized();
+    throw new Error('Your session has expired. Please sign in again.');
+  }
   if (!res.ok) throw new Error('Thumbnail fetch failed');
   const blob = await res.blob();
   return URL.createObjectURL(blob);

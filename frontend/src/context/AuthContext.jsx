@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { setOnUnauthorized } from '../services/api';
 
 /**
  * AuthContext stores the authenticated user profile and the access token
@@ -11,9 +12,10 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser]   = useState(null);   // { name, email, picture }
-  const [token, setToken] = useState(null);   // opaque session token for /api calls
-  const [loading, setLoading] = useState(false);
+  const [user, setUser]                 = useState(null);   // { name, email, picture }
+  const [token, setToken]               = useState(null);   // opaque session token for /api calls
+  const [loading, setLoading]           = useState(false);
+  const [sessionError, setSessionError] = useState(null);
 
   /**
    * Called after a successful OAuth code exchange on the backend.
@@ -23,15 +25,35 @@ export function AuthProvider({ children }) {
   const login = useCallback((profile, sessionToken) => {
     setUser(profile);
     setToken(sessionToken);
+    setSessionError(null);
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback((reason = null) => {
     setUser(null);
     setToken(null);
+    setSessionError(reason);
   }, []);
 
+  // Listen for 401 Unauthorized from any API request mid-session
+  useEffect(() => {
+    setOnUnauthorized(() => {
+      logout('Your session has expired. Please sign in again.');
+    });
+  }, [logout]);
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, setLoading, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        loading,
+        setLoading,
+        sessionError,
+        setSessionError,
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

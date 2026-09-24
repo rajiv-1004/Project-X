@@ -17,11 +17,43 @@ import {
 
 const router = express.Router();
 
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB
+
 // Store uploaded files in memory; 20 MB limit matches frontend validation
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 20 * 1024 * 1024 },
+  limits: { fileSize: MAX_FILE_SIZE_BYTES },
+  fileFilter: (_req, file, cb) => {
+    if (ALLOWED_MIME_TYPES.includes(file.mimetype?.toLowerCase())) {
+      cb(null, true);
+    } else {
+      cb(new Error('INVALID_MIME_TYPE'));
+    }
+  },
 });
+
+/**
+ * Middleware wrapper for multer upload that catches file size and type errors
+ * and returns consistent 400 Bad Request responses matching the frontend error pattern.
+ */
+function handleUploadFile(req, res, next) {
+  upload.single('photo')(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ error: 'File is too large. Maximum allowed size is 20 MB.' });
+      }
+      return res.status(400).json({ error: 'Invalid file upload. Please check the file and try again.' });
+    }
+    if (err) {
+      if (err.message === 'INVALID_MIME_TYPE') {
+        return res.status(400).json({ error: 'Unsupported file type. Please upload a JPEG, PNG, WebP, or HEIC image.' });
+      }
+      return res.status(400).json({ error: 'Could not process uploaded file.' });
+    }
+    next();
+  });
+}
 
 /**
  * Middleware — extract the Bearer token and build an authed Google client.
@@ -85,9 +117,22 @@ router.get('/info', requireAuth, async (req, res) => {
  * Folder existence is checked here — the frontend does NOT need a separate
  * /folder call before uploading.
  */
-router.post('/upload', requireAuth, upload.single('photo'), async (req, res) => {
+router.post('/upload', requireAuth, handleUploadFile, async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No photo file received.' });
+  }
+
+  // Server-side re-validation of file type and size
+  if (!ALLOWED_MIME_TYPES.includes(req.file.mimetype?.toLowerCase())) {
+    return res.status(400).json({
+      error: 'Unsupported file type. Please upload a JPEG, PNG, WebP, or HEIC image.',
+    });
+  }
+
+  if (req.file.size > MAX_FILE_SIZE_BYTES) {
+    return res.status(400).json({
+      error: 'File is too large. Maximum allowed size is 20 MB.',
+    });
   }
 
   const lat = req.body.lat ? parseFloat(req.body.lat) : null;
