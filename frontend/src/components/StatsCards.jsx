@@ -2,81 +2,96 @@ import React from 'react';
 import styles from './StatsCards.module.css';
 
 /**
- * StatsCards — 4 responsive metric summary cards:
- *  1. Photos Uploaded
- *  2. Drive Folder
- *  3. Google Sheet
- *  4. Locations Mapped
+ * StatsCards — Compact 4-metric geospatial summary:
+ *  1. Photos Uploaded (total count & sync status)
+ *  2. GPS Tagged (count & percentage)
+ *  3. No GPS (attention count)
+ *  4. Drive & Sheet Sync (live integration status)
  */
 function StatsCards({ photos = [], driveInfo = null, userName = '' }) {
   const totalPhotos = photos.length;
   const mappedCount = photos.filter((p) => p.lat != null && p.lng != null).length;
+  const noGpsCount = totalPhotos - mappedCount;
   const folderName = driveInfo?.folderName || (userName ? userName : 'Connected');
-  const sheetName = 'GPS Log';
+
+  const gpsPercentage = totalPhotos > 0 ? Math.round((mappedCount / totalPhotos) * 100) : 0;
 
   return (
-    <div className={styles.grid}>
-      {/* 1. Photos Uploaded */}
-      <div className={styles.card}>
+    <div className={styles.metricsRow} aria-label="Geospatial summary metrics">
+      {/* 1. Total Photos */}
+      <div className={styles.metricCard}>
         <div className={styles.cardHeader}>
-          <span className={styles.title}>Photos Uploaded</span>
-          <div className={`${styles.iconWrap} ${styles.blueIcon}`}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-              <circle cx="8.5" cy="8.5" r="1.5"></circle>
-              <polyline points="21 15 16 10 5 21"></polyline>
+          <span className={styles.metricTitle}>Photos Stored</span>
+          <div className={styles.metricIcon}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <polyline points="21 15 16 10 5 21" />
             </svg>
           </div>
         </div>
-        <div className={styles.value}>{totalPhotos}</div>
-        <span className={styles.badgeSuccess}>All synced</span>
+        <div className={styles.metricValueRow}>
+          <span className={styles.metricValue}>{totalPhotos}</span>
+          <span className={styles.badgeNeutral}>Drive Synced</span>
+        </div>
       </div>
 
-      {/* 2. Drive Folder */}
-      <div className={styles.card}>
+      {/* 2. GPS Tagged */}
+      <div className={styles.metricCard}>
         <div className={styles.cardHeader}>
-          <span className={styles.title}>Drive Folder</span>
-          <div className={`${styles.iconWrap} ${styles.amberIcon}`}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          <span className={styles.metricTitle}>GPS Tagged</span>
+          <div className={styles.metricIcon}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
             </svg>
           </div>
         </div>
-        <div className={styles.valueText} title={folderName}>{folderName}</div>
-        <span className={styles.badgeNeutral}>Google Drive</span>
+        <div className={styles.metricValueRow}>
+          <span className={styles.metricValue}>{mappedCount}</span>
+          <span className={styles.badgeSuccess}>
+            {totalPhotos > 0 ? `${gpsPercentage}% Mapped` : '0 Mapped'}
+          </span>
+        </div>
       </div>
 
-      {/* 3. Google Sheet */}
-      <div className={styles.card}>
+      {/* 3. No GPS */}
+      <div className={styles.metricCard}>
         <div className={styles.cardHeader}>
-          <span className={styles.title}>Google Sheet</span>
-          <div className={`${styles.iconWrap} ${styles.emeraldIcon}`}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="8" y1="13" x2="16" y2="13"></line>
-              <line x1="8" y1="17" x2="16" y2="17"></line>
-              <polyline points="10 9 9 9 8 9"></polyline>
+          <span className={styles.metricTitle}>No Location</span>
+          <div className={styles.metricIcon}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
             </svg>
           </div>
         </div>
-        <div className={styles.valueText} title={sheetName}>{sheetName}</div>
-        <span className={styles.badgeSuccess}>Live Sync</span>
+        <div className={styles.metricValueRow}>
+          <span className={styles.metricValue}>{noGpsCount}</span>
+          {noGpsCount > 0 ? (
+            <span className={styles.badgeWarning}>{noGpsCount} Untagged</span>
+          ) : (
+            <span className={styles.badgeSuccess}>All Geotagged</span>
+          )}
+        </div>
       </div>
 
-      {/* 4. Locations Mapped */}
-      <div className={styles.card}>
+      {/* 4. Drive & Sheet Sync */}
+      <div className={styles.metricCard}>
         <div className={styles.cardHeader}>
-          <span className={styles.title}>Locations Mapped</span>
-          <div className={`${styles.iconWrap} ${styles.purpleIcon}`}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-              <circle cx="12" cy="10" r="3"></circle>
+          <span className={styles.metricTitle}>Drive Folder</span>
+          <div className={styles.metricIcon}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
             </svg>
           </div>
         </div>
-        <div className={styles.value}>{mappedCount}</div>
-        <span className={styles.badgePurple}>{totalPhotos > 0 ? `${Math.round((mappedCount / totalPhotos) * 100)}% with GPS` : '0 with GPS'}</span>
+        <div className={styles.metricValueRow}>
+          <span className={styles.metricValueText} title={folderName}>
+            {folderName}
+          </span>
+          <span className={styles.badgeSuccess}>Live Sync</span>
+        </div>
       </div>
     </div>
   );

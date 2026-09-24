@@ -92,13 +92,19 @@ router.post('/folder', requireAuth, async (req, res) => {
 router.get('/info', requireAuth, async (req, res) => {
   try {
     const { folderId, folderName } = await findOrCreateFolder(req.authClient);
-    const sheetId = await findOrCreateSheet(req.authClient, folderId);
+    let sheetId = null;
+    try {
+      sheetId = await findOrCreateSheet(req.authClient, folderId);
+    } catch (sheetErr) {
+      console.warn('[drive/info] sheet lookup warning (non-fatal):', sheetErr.message ?? sheetErr);
+    }
+
     return res.json({
       folderId,
       folderName,
       sheetId,
       folderUrl: `https://drive.google.com/drive/folders/${folderId}`,
-      sheetUrl: `https://docs.google.com/spreadsheets/d/${sheetId}`,
+      sheetUrl: sheetId ? `https://docs.google.com/spreadsheets/d/${sheetId}` : null,
     });
   } catch (err) {
     console.error('[drive/info]', err.message ?? err);
@@ -175,18 +181,30 @@ router.get('/photos', requireAuth, async (req, res) => {
   try {
     const { folderId } = await findOrCreateFolder(req.authClient);
 
-    // Fetch Drive files and Sheet GPS data in parallel for efficiency
-    const [files, sheetId] = await Promise.all([
-      listPhotosFromDrive(req.authClient, folderId),
-      findOrCreateSheet(req.authClient, folderId),
-    ]);
+    // 1. Fetch Drive files
+    const files = await listPhotosFromDrive(req.authClient, folderId);
 
-    const gpsMap = await getGpsDataFromSheet(req.authClient, sheetId);
+    // When folder has no photos, immediately return empty array
+    if (!files || files.length === 0) {
+      return res.json([]);
+    }
+
+    // 2. Attempt to join GPS data from the Sheet (non-fatal if absent or empty)
+    let gpsMap = {};
+    try {
+      const sheetId = await findOrCreateSheet(req.authClient, folderId);
+      if (sheetId) {
+        gpsMap = await getGpsDataFromSheet(req.authClient, sheetId);
+      }
+    } catch (sheetErr) {
+      console.warn('[drive/photos] sheet GPS lookup warning (non-fatal):', sheetErr.message ?? sheetErr);
+    }
 
     const photos = files.map((f) => ({
       ...f,
       lat: gpsMap[f.name]?.lat ?? null,
       lng: gpsMap[f.name]?.lng ?? null,
+      createdTime: f.createdTime || gpsMap[f.name]?.timestamp || null,
     }));
 
     return res.json(photos);

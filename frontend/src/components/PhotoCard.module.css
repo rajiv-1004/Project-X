@@ -1,37 +1,39 @@
-/* PhotoCard.module.css — GPS data is the product, not the photo */
+/* PhotoCard.module.css — Professional geospatial field record card */
 
 .card {
   background: var(--surface);
-  /* Flat border. If GPS-tagged, a 2px top border in signal green is added (see .cardGps) */
   border: 1px solid var(--color-border);
-  border-top: 2px solid var(--color-border);
   border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
-  /* No box-shadow lift — flat document feel */
   display: flex;
   flex-direction: column;
-  transition: border-color var(--transition);
-}
-
-/* GPS-tagged card: 2px signal-green top border — structural, not decorative */
-.cardGps {
-  border-top-color: var(--signal);
+  transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+  position: relative;
 }
 
 .card:hover {
   border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-card);
+  transform: translateY(-1px);
 }
 
-.card:hover.cardGps {
-  border-top-color: var(--signal-mid);
+/* Subtle indicator bar for GPS records */
+.cardGps {
+  border-top: 2px solid var(--signal);
 }
 
-/* ─── Thumbnail ─────────────────────────────────────────────────────────────── */
+.cardNoGps {
+  border-top: 2px solid var(--color-border-strong);
+}
+
+/* ─── Thumbnail container ─────────────────────────────────────────────────── */
 .thumbContainer {
   position: relative;
   width: 100%;
-  aspect-ratio: 4 / 3;
-  background: var(--ink);
+  aspect-ratio: 16 / 10;
+  background: #141720;
+  cursor: pointer;
   overflow: hidden;
 }
 
@@ -40,11 +42,12 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: opacity 200ms ease;
+  transition: transform 220ms ease, opacity 200ms ease;
 }
 
-.thumb:hover {
-  opacity: 0.92;
+.thumbContainer:hover .thumb {
+  transform: scale(1.02);
+  opacity: 0.95;
 }
 
 .thumbPlaceholder {
@@ -53,16 +56,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #252B3B;
+  background: #181C26;
   color: var(--color-sidebar-muted);
 }
 
-/* GPS badge — minimal, top-left on photo */
+/* Overlay badges */
 .overlayTop {
   position: absolute;
-  top: 0.6rem;
-  left: 0.6rem;
-  right: 0.6rem;
+  top: 0.5rem;
+  left: 0.5rem;
+  right: 0.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -72,35 +75,38 @@
 .gpsBadge {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  background: rgba(29, 106, 84, 0.88);
-  color: #ffffff;
+  gap: 0.3rem;
+  background: rgba(22, 83, 66, 0.92);
+  color: #FFFFFF;
   font-size: 0.68rem;
   font-weight: 600;
   font-family: var(--font-mono);
   padding: 0.18rem 0.45rem;
   border-radius: var(--radius-sm);
-  letter-spacing: 0.03em;
+  backdrop-filter: blur(4px);
   pointer-events: auto;
 }
 
 .noGpsBadge {
   display: inline-flex;
-  background: rgba(26, 31, 46, 0.72);
-  color: rgba(240, 238, 237, 0.65);
+  align-items: center;
+  background: rgba(18, 22, 32, 0.75);
+  color: rgba(240, 240, 240, 0.75);
   font-size: 0.68rem;
+  font-weight: 500;
   font-family: var(--font-mono);
   padding: 0.18rem 0.45rem;
   border-radius: var(--radius-sm);
+  backdrop-filter: blur(4px);
   pointer-events: auto;
 }
 
-.driveLinkBtn {
+.quickDriveBtn {
   width: 26px;
   height: 26px;
   border-radius: var(--radius-sm);
-  background: rgba(26, 31, 46, 0.72);
-  color: rgba(240, 238, 237, 0.75);
+  background: rgba(18, 22, 32, 0.75);
+  color: rgba(240, 240, 240, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -109,37 +115,48 @@
   text-decoration: none;
 }
 
-.driveLinkBtn:hover {
-  background: rgba(26, 31, 46, 0.9);
-  color: #ffffff;
+.quickDriveBtn:hover {
+  background: rgba(18, 22, 32, 0.95);
+  color: #FFFFFF;
 }
 
-/* ─── Content block ─────────────────────────────────────────────────────────── */
+/* ─── Card Content ────────────────────────────────────────────────────────── */
 .content {
-  padding: 0.85rem 1rem;
+  padding: 0.85rem 0.95rem;
   display: flex;
   flex-direction: column;
   flex: 1;
-  gap: 0.65rem;
+  gap: 0.5rem;
+  background: var(--surface);
+}
+
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
 
 .title {
-  font-size: 0.85rem;
+  font-size: 0.86rem;
   font-weight: 600;
   color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: pointer;
 }
 
-/* THE DISTINCTIVE ELEMENT: GPS coordinates in IBM Plex Mono, signal green */
+.title:hover {
+  color: var(--signal);
+}
+
 .coords {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
   font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 400;
+  font-size: 0.74rem;
   color: var(--signal);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -150,57 +167,74 @@
 .coordsAbsent {
   font-family: var(--font-mono);
   font-size: 0.72rem;
-  color: var(--slate);
-  opacity: 0.6;
+  color: var(--color-text-subtle);
+  font-style: italic;
 }
 
-/* ─── Actions ───────────────────────────────────────────────────────────────── */
+.metaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--color-text-subtle);
+  margin-top: 0.15rem;
+}
+
+/* ─── Actions Bar ─────────────────────────────────────────────────────────── */
 .actions {
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.45rem;
   margin-top: auto;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--color-border-subtle);
 }
 
-.mapBtn,
-.shareBtn {
+.mapBtn {
   flex: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
-  padding: 0.45rem 0.6rem;
-  border-radius: var(--radius-md);
-  font-size: 0.78rem;
-  font-weight: 600;
+  padding: 0.42rem 0.6rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.76rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: background var(--transition), color var(--transition), border-color var(--transition);
-  font-family: inherit;
-  border: 1px solid var(--color-border);
-}
-
-.mapBtn {
   background: var(--paper);
   color: var(--slate);
+  border: 1px solid var(--color-border);
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
 }
 
 .mapBtn:hover:not(:disabled) {
-  background: var(--color-border);
+  background: var(--surface-subtle);
   color: var(--ink);
+  border-color: var(--color-border-strong);
 }
 
 .mapBtn:disabled {
-  opacity: 0.4;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
 .shareBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.42rem 0.65rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.76rem;
+  font-weight: 500;
+  cursor: pointer;
   background: var(--signal-light);
   color: var(--signal);
-  border-color: rgba(29, 106, 84, 0.2);
+  border: 1px solid var(--color-success-border);
+  transition: background var(--transition), color var(--transition);
 }
 
 .shareBtn:hover {
   background: var(--signal);
-  color: #ffffff;
-  border-color: var(--signal);
+  color: #FFFFFF;
 }

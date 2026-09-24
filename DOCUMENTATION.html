@@ -272,12 +272,14 @@ Google Cloud (Drive API v3, Sheets API v4, OAuth2 / OIDC)
 <h3>4. Validation</h3>
 <ul>
   <li><strong>Client-Side File Validation</strong> (<code>frontend/src/utils/fileUtils.js</code> lines 10–26): Validates file existence, allowed MIME types (<code>image/jpeg, image/png, image/webp, image/heic, image/heif</code>), and max size (≤ 20 MB) before network transfer begins.</li>
-  <li><strong>Server-Side File Validation</strong> (<code>backend/src/routes/drive.js</code> lines 21 &amp; 66–68): Multer limits size to 20 MB and handler verifies <code>req.file</code> exists.</li>
-  <li><strong>Sharing Email Validation</strong>: Client-side HTML5 validation and <code>.trim()</code> in <code>PhotoCard.jsx</code> line 110; server-side regex/format check (<code>!emailAddress || typeof emailAddress !== 'string' || !emailAddress.includes('@')</code>) in <code>backend/src/routes/drive.js</code> lines 140–142.</li>
+  <li><strong>Client-Side GPS Confirmation Step</strong> (<code>UploadButton.jsx</code> &amp; <code>GpsWarningModal.jsx</code>): Pre-checks GPS EXIF data client-side. If missing, prompts the user via an accessible modal with device camera geotagging recommendations, allowing them to either "Upload anyway" (saving with null coordinates) or "Cancel" (0 network requests).</li>
+  <li><strong>Server-Side File Re-Validation</strong> (<code>backend/src/routes/drive.js</code>): Multer middleware wrapper and upload handler strictly enforce <code>ALLOWED_MIME_TYPES</code> and <code>MAX_FILE_SIZE_BYTES</code> (20 MB), returning standardized HTTP 400 Bad Request responses with friendly errors to prevent direct API bypasses.</li>
+  <li><strong>Sharing Email Validation</strong>: Client-side HTML5 validation and <code>.trim()</code> in <code>ShareModal.jsx</code>; server-side regex/format check (<code>!emailAddress || typeof emailAddress !== 'string' || !emailAddress.includes('@')</code>) in <code>backend/src/routes/drive.js</code>.</li>
 </ul>
 
 <h3>5. Error Handling &amp; Information Hiding</h3>
 <ul>
+  <li><strong>Mid-Session 401 Expiration Detection</strong>: Centralized in <code>frontend/src/services/api.js</code> via <code>setOnUnauthorized()</code>. When an access token expires during an active session, the app intercepts the 401 response, notifies <code>AuthContext.jsx</code> to clear in-memory state, and cleanly returns the user to <code>LoginPage.jsx</code> displaying: <em>"Your session has expired. Please sign in again."</em></li>
   <li><strong>Try/Catch on Every Route</strong>: All asynchronous route handlers wrap Google API invocations in <code>try/catch</code> blocks.</li>
   <li><strong>Information Hiding</strong>: Internal stack traces and raw Google API error payloads are logged server-side only via <code>console.error</code>. Users receive safe, friendly messages.</li>
   <li><strong>Global Fallback Error Handler</strong> (<code>backend/src/index.js</code> lines 28–34):

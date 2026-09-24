@@ -124,7 +124,7 @@ export async function uploadFileToDrive(authClient, multerFile, folderId) {
       mimeType: multerFile.mimetype,
       body:     stream,
     },
-    fields: 'id, name, webViewLink, thumbnailLink',
+    fields: 'id, name, webViewLink, thumbnailLink, createdTime',
   });
 
   return {
@@ -132,6 +132,7 @@ export async function uploadFileToDrive(authClient, multerFile, folderId) {
     name:          data.name,
     webViewLink:   data.webViewLink,
     thumbnailLink: data.thumbnailLink,
+    createdTime:   data.createdTime,
   };
 }
 
@@ -140,14 +141,14 @@ export async function uploadFileToDrive(authClient, multerFile, folderId) {
  *
  * @param {import('googleapis').Auth.OAuth2Client} authClient
  * @param {string} folderId
- * @returns {Promise<Array<{ fileId, name, thumbnailLink, webViewLink }>>}
+ * @returns {Promise<Array<{ fileId, name, thumbnailLink, webViewLink, createdTime }>>}
  */
 export async function listPhotosFromDrive(authClient, folderId) {
   const drive = google.drive({ version: 'v3', auth: authClient });
 
   const { data } = await drive.files.list({
     q: `'${folderId}' in parents and mimeType contains 'image/' and trashed=false`,
-    fields: 'files(id, name, thumbnailLink, webViewLink)',
+    fields: 'files(id, name, thumbnailLink, webViewLink, createdTime)',
     orderBy: 'createdTime desc',
     pageSize: 100,
   });
@@ -157,6 +158,7 @@ export async function listPhotosFromDrive(authClient, folderId) {
     name:          f.name,
     thumbnailLink: f.thumbnailLink,
     webViewLink:   f.webViewLink,
+    createdTime:   f.createdTime,
   }));
 }
 

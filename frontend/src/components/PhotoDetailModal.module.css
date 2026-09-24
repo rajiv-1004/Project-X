@@ -1,0 +1,289 @@
+/* PhotoDetailModal.module.css — Professional geospatial photo inspection modal */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(18, 22, 32, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1.5rem;
+  animation: fadeIn 150ms ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-modal);
+  width: 100%;
+  max-width: 860px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUp 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--surface);
+}
+
+.headerTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.badgeGps {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 2px 7px;
+  background: var(--color-success-light);
+  color: var(--color-success);
+  border: 1px solid var(--color-success-border);
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badgeNoGps {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 2px 7px;
+  background: var(--color-neutral-light);
+  color: var(--color-neutral);
+  border: 1px solid var(--color-neutral-border);
+  border-radius: var(--radius-sm);
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--color-text-subtle);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition), background var(--transition);
+}
+
+.closeBtn:hover {
+  background: var(--surface-subtle);
+  color: var(--ink);
+}
+
+/* Modal Body — Split 2 Columns */
+.body {
+  display: flex;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Left Image Column */
+.imageColumn {
+  flex: 1.1;
+  background: #0B0E14;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 380px;
+  position: relative;
+  overflow: hidden;
+}
+
+.mainImage {
+  max-width: 100%;
+  max-height: 480px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.placeholder {
+  color: #6C768A;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+/* Right Details Column */
+.detailsColumn {
+  flex: 0.9;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  background: var(--surface);
+  overflow-y: auto;
+}
+
+.fileNameTitle {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.4;
+  word-break: break-all;
+}
+
+.metaGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1rem;
+  background: var(--paper);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.metaRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.metaLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-subtle);
+}
+
+.metaValue {
+  font-size: 0.88rem;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.metaCoord {
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  color: var(--signal);
+  font-weight: 500;
+}
+
+.noCoordNotice {
+  font-size: 0.84rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* External Link Row */
+.externalLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--signal);
+  text-decoration: none;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.externalLink:hover {
+  text-decoration: underline;
+}
+
+/* Action Buttons Footer */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0.65rem 1rem;
+  background: var(--signal);
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition);
+  text-decoration: none;
+}
+
+.btnPrimary:hover {
+  background: var(--signal-mid);
+}
+
+.btnSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0.65rem 1rem;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+  text-decoration: none;
+}
+
+.btnSecondary:hover {
+  background: var(--paper);
+  border-color: var(--slate);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .body {
+    flex-direction: column;
+  }
+
+  .imageColumn {
+    min-height: 240px;
+    max-height: 280px;
+  }
+
+  .detailsColumn {
+    padding: 1.25rem 1rem;
+  }
+}

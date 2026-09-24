@@ -1,114 +1,120 @@
-/* StatsCards.module.css */
+/* StatsCards.module.css — Compact Metrics Bar for Field Intelligence */
 
-.grid {
+.metricsRow {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
-  margin-bottom: 1.5rem;
 }
 
-.card {
+.metricCard {
   background: var(--surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  padding: 1.1rem 1.25rem;
+  box-shadow: var(--shadow-sm);
+  padding: 1rem 1.15rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  /* No hover lift — flat document feel */
+  gap: 0.35rem;
+  transition: border-color var(--transition);
+}
+
+.metricCard:hover {
+  border-color: var(--color-border-strong);
 }
 
 .cardHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.5rem;
 }
 
-.title {
-  font-size: 0.75rem;
-  font-weight: 500;
+.metricTitle {
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-subtle);
+}
+
+.metricIcon {
   color: var(--slate);
-  letter-spacing: 0.01em;
-}
-
-.iconWrap {
-  width: 30px;
-  height: 30px;
-  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
 }
 
-/* All icons use signal green — not a rainbow of icon colours */
-.blueIcon,
-.amberIcon,
-.emeraldIcon,
-.purpleIcon {
-  background: var(--signal-light);
-  color: var(--signal);
+.metricValueRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.2rem;
 }
 
-/* Stat value — IBM Plex Mono, because counts are data */
-.value {
+.metricValue {
   font-family: var(--font-mono);
-  font-size: 1.6rem;
-  font-weight: 500;
+  font-size: 1.45rem;
+  font-weight: 600;
   color: var(--ink);
+  line-height: 1.1;
   font-variant-numeric: tabular-nums;
-  line-height: 1.2;
 }
 
-.valueText {
-  font-size: 1rem;
-  font-weight: 700;
+.metricValueText {
+  font-size: 0.95rem;
+  font-weight: 600;
   color: var(--ink);
-  letter-spacing: -0.01em;
-  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100%;
+  max-width: 140px;
 }
 
-.badgeSuccess,
-.badgeNeutral,
-.badgePurple {
-  align-self: flex-start;
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  font-weight: 500;
-  padding: 0.15rem 0.45rem;
-  border-radius: var(--radius-sm);
-}
-
+/* Badges */
 .badgeSuccess {
-  background: var(--signal-light);
-  color: var(--signal);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  background: var(--color-success-light);
+  color: var(--color-success);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-success-border);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.badgeWarning {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  background: var(--color-warning-light);
+  color: var(--color-warning);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-warning-border);
+  font-family: var(--font-mono);
+  white-space: nowrap;
 }
 
 .badgeNeutral {
-  background: var(--paper);
-  color: var(--slate);
-  border: 1px solid var(--color-border);
-}
-
-.badgePurple {
-  background: var(--paper);
-  color: var(--slate);
-  border: 1px solid var(--color-border);
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 1px 6px;
+  background: var(--color-neutral-light);
+  color: var(--color-neutral);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-neutral-border);
+  font-family: var(--font-mono);
+  white-space: nowrap;
 }
 
 @media (max-width: 1024px) {
-  .grid {
+  .metricsRow {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (max-width: 640px) {
-  .grid {
+@media (max-width: 540px) {
+  .metricsRow {
     grid-template-columns: 1fr;
-    gap: 0.75rem;
   }
 }

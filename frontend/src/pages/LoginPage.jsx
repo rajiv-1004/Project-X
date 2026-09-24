@@ -66,23 +66,62 @@ function LoginPage() {
           <span className={styles.brandName}>Project X</span>
         </div>
 
+        {/* Topographic contour pattern — 4 unevenly spaced elevation rings */}
+        <div className={styles.contourContainer} aria-hidden="true" role="presentation">
+          <svg
+            className={styles.contourSvg}
+            viewBox="0 0 500 320"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            focusable="false"
+            aria-hidden="true"
+            preserveAspectRatio="xMidYMid meet"
+          >
+            {/* Outer base contour — broad perimeter boundary */}
+            <path
+              d="M -30,130 C 30,50 130,40 230,80 C 340,120 400,60 480,95 C 530,120 540,180 500,230 C 450,290 330,270 230,290 C 120,310 10,260 -30,200 Z"
+              stroke="var(--signal-mid)"
+              strokeWidth="1.4"
+            />
+            {/* Intermediate lower contour — begins steep pinch on northwest flank */}
+            <path
+              d="M 15,138 C 65,70 145,62 235,96 C 325,130 380,82 445,115 C 485,138 492,185 458,228 C 410,275 305,250 225,264 C 145,278 45,238 15,138 Z"
+              stroke="var(--signal-mid)"
+              strokeWidth="1.4"
+            />
+            {/* Mid-elevation contour — closely compressed against crest ring on the north */}
+            <path
+              d="M 60,142 C 95,85 160,78 240,110 C 310,138 360,105 410,130 C 445,152 448,192 415,225 C 375,255 280,230 215,240 C 145,250 80,215 60,142 Z"
+              stroke="var(--signal-mid)"
+              strokeWidth="1.4"
+            />
+            {/* Summit ridge contour — high-elevation plateau with wide offset south shelf */}
+            <path
+              d="M 115,148 C 138,102 185,95 248,122 C 295,142 332,125 365,145 C 390,162 392,192 365,212 C 330,230 255,212 205,218 C 150,224 125,190 115,148 Z"
+              stroke="var(--signal-mid)"
+              strokeWidth="1.4"
+            />
+          </svg>
+        </div>
+
         <div className={styles.tagline}>
           <span className={styles.separator} />
+          <h2 className={styles.taglineHeading}>Capture. Locate. Organise.</h2>
           <p className={styles.taglineText}>
-            Field photo logging for professionals. Capture, geo-tag, and organise documents in Google Drive.
+            Field documentation &amp; geospatial photo logging. Capture records, extract GPS metadata, and sync directly with Google Drive.
           </p>
         </div>
 
-        <span className={styles.leftFooter}>Drive &amp; GPS Suite</span>
+        <span className={styles.leftFooter}>Geospatial Field Suite</span>
       </div>
 
       {/* Right panel — sign-in form */}
       <div className={styles.rightPanel}>
         <div className={styles.formCard}>
           <div>
-            <h1 className={styles.heading}>Sign in to continue</h1>
+            <h1 className={styles.heading}>Sign in to Project X</h1>
             <p className={styles.subheading}>
-              Your photos and GPS records are stored privately in your own Google Drive.
+              Capture field photos, extract location data, and keep everything organised in your private Google Drive.
             </p>
           </div>
 

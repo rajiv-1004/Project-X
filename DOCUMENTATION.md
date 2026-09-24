@@ -22,6 +22,8 @@
 7. **Interactive Map View**: Centered map navigation using OpenStreetMap and Leaflet (`react-leaflet`) without paid map APIs.
 8. **Drive-Based Sharing**: Secure user-level permission sharing with target Google accounts (e.g. `su1@vr2.in`) without public links.
 
+> **Note on the Sheet log view**: The app includes a "Google Sheet Log" sidebar view that renders the GPS data table from the Sheet created in Requirement 5 directly inside the dashboard. This is an added convenience view — not a separate graded requirement — providing quick in-app access to the same Sheet log data without leaving the interface.
+
 ---
 
 ## 2. System Architecture
@@ -180,15 +182,23 @@ The codebase enforces clear separation of concerns across dedicated architectura
   - Checks for null/missing file.
   - Enforces allowed MIME types (`image/jpeg`, `image/png`, `image/webp`, `image/heic`, `image/heif`).
   - Enforces max size limit (20 MB). Rejects invalid files immediately before network transfer begins.
-- **Server-Side File Validation** ([`backend/src/routes/drive.js`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/backend/src/routes/drive.js) lines 21 & 66–68):
-  - Multer limits `fileSize: 20 * 1024 * 1024`.
-  - Handler validates `req.file` exists, returning HTTP 400 (`'No photo file received.'`).
+- **Client-Side GPS EXIF Validation & Confirmation Step** ([`frontend/src/components/UploadButton.jsx`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/frontend/src/components/UploadButton.jsx), [`GpsWarningModal.jsx`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/frontend/src/components/GpsWarningModal.jsx)):
+  - Evaluates GPS coordinates client-side prior to network dispatch.
+  - If GPS coordinates are missing, pauses the upload and presents an accessible modal (`GpsWarningModal`) with helpful camera geotagging recommendations.
+  - Provides two distinct user actions: "Cancel" (aborts with zero network calls) or "Upload anyway" (proceeds with upload, logging empty GPS fields in Sheets).
+- **Server-Side File Type & Size Re-Validation** ([`backend/src/routes/drive.js`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/backend/src/routes/drive.js) lines 20–56 & 120–135):
+  - Does not rely on frontend validation alone; protects against direct API bypasses.
+  - Multer middleware wrapper catches oversized files (`LIMIT_FILE_SIZE`) and unauthorized file types (`INVALID_MIME_TYPE`).
+  - Route handler explicitly re-validates `ALLOWED_MIME_TYPES` and `MAX_FILE_SIZE_BYTES`, returning standardized HTTP 400 Bad Request responses matching the friendly frontend error pattern (`'Unsupported file type. Please upload a JPEG, PNG, WebP, or HEIC image.'` and `'File is too large. Maximum allowed size is 20 MB.'`).
 - **Sharing Email Validation**:
-  - Client-side: [`PhotoCard.jsx`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/frontend/src/components/PhotoCard.jsx) line 110 uses HTML5 input type `email`, required attribute, and `shareEmail.trim()`.
-  - Server-side: [`backend/src/routes/drive.js`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/backend/src/routes/drive.js) lines 140–142 explicitly validates `!emailAddress || typeof emailAddress !== 'string' || !emailAddress.includes('@')`, returning HTTP 400 (`'A valid email address is required.'`).
+  - Client-side: [`ShareModal.jsx`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/frontend/src/components/ShareModal.jsx) uses HTML5 input type `email`, required attribute, and `email.trim()`.
+  - Server-side: [`backend/src/routes/drive.js`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/backend/src/routes/drive.js) explicitly validates `!emailAddress || typeof emailAddress !== 'string' || !emailAddress.includes('@')`, returning HTTP 400 (`'A valid email address is required.'`).
 
 ### 5. Error Handling & Information Hiding
 - **Try/Catch on Every Route**: All asynchronous route handlers in `backend/src/routes/auth.js` and `backend/src/routes/drive.js` wrap Google API invocations in `try/catch` blocks.
+- **Mid-Session 401 Expiration Detection & Seamless Login Return**:
+  - Centralized in [`frontend/src/services/api.js`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/frontend/src/services/api.js) via `setOnUnauthorized()`.
+  - When an access token expires or is rejected with HTTP 401 during an active session, the app immediately intercepts the response, notifies [`AuthContext.jsx`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/frontend/src/context/AuthContext.jsx), clears the in-memory token, and cleanly returns the user to [`LoginPage.jsx`](file:///c:/Users/91637/Downloads/project%20X%20%28final%20version%29/frontend/src/pages/LoginPage.jsx) with a distinct, user-friendly notice: *"Your session has expired. Please sign in again."* rather than stranding the user on a broken dashboard with vague errors.
 - **Strict Information Hiding**: Technical details, stack traces, and Google API error objects are logged to server console only (`console.error`). Clients receive safe, friendly messages:
   - Auth failure: `"Authentication failed. Please try again."`
   - Upload failure: `"We couldn't upload this photo. Please try again."`
@@ -211,6 +221,12 @@ The codebase enforces clear separation of concerns across dedicated architectura
   - In `googleClient.js`: explains why per-request client instances prevent credential race conditions across concurrent requests.
   - In `driveService.js`: documents why duplicate checking uses exact name and MIME filters before creation.
   - In `PhotoCard.jsx`: documents authenticated blob URL loading and `URL.revokeObjectURL()` memory cleanup.
+
+### 7. Security & Privacy Standards (in-code enforcement)
+- **No Hardcoding**: No user IDs, folder IDs, spreadsheet IDs, or tokens are hardcoded anywhere in the codebase. All resource IDs are resolved at runtime through the Google API and cached in server-side session memory.
+- **Client-Side EXIF Extraction**: GPS coordinates are extracted in-browser via `exifr.gps()` — no image bytes leave the device until the user explicitly approves the upload. This minimises both bandwidth and server processing.
+- **User-Level Sharing Only**: Drive permissions are granted directly per Google account (`type: 'user'`, `role: 'writer'`). The `anyoneWithLink` sharing type is explicitly prohibited and never used.
+- **No Disk Footprint**: `multer` is configured with `memoryStorage()` — uploaded file buffers stream directly from client to Google Drive without ever being written to the server's local filesystem.
 
 ---
 

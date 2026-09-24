@@ -1,100 +1,82 @@
-/* UploadButton.module.css */
+/* UploadButton.module.css — Professional Field Upload Workspace */
 
-/* ─── Hero card (home tab) ────────────────────────────────────────────────── */
-.heroCard {
+.workspaceCard {
   background: var(--surface);
-  border: 1px dashed var(--color-border-strong);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: 3rem 2rem;
-  text-align: center;
+  box-shadow: var(--shadow-sm);
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  transition: border-color var(--transition), background var(--transition);
-  max-width: 720px;
-  margin: 0 auto;
-  position: relative;
+  gap: 1.25rem;
 }
 
-.heroCard:hover,
-.dragActive {
-  border-color: var(--signal);
-  background: var(--signal-light);
-}
-
-.hiddenInput {
-  display: none;
-}
-
-.iconCircle {
-  width: 60px;
-  height: 60px;
-  border-radius: var(--radius-full);
-  background: var(--signal-light);
-  color: var(--signal);
+.workspaceHeader {
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin-bottom: 1.1rem;
-  border: 1px solid rgba(29, 106, 84, 0.2);
-}
-
-.heroTitle {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--ink);
-  margin-bottom: 0.4rem;
-  letter-spacing: -0.02em;
-}
-
-.heroSubtitle {
-  font-size: 0.85rem;
-  color: var(--slate);
-  max-width: 480px;
-  line-height: 1.55;
-  margin-bottom: 1.75rem;
-}
-
-/* ─── Action buttons ─────────────────────────────────────────────────────── */
-.actionButtons {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  justify-content: space-between;
+  gap: 1rem;
   flex-wrap: wrap;
-  justify-content: center;
-  margin-bottom: 1rem;
 }
 
-.btnPrimary,
-.btnSecondary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.65rem 1.4rem;
-  border-radius: var(--radius-md);
-  font-size: 0.88rem;
+.workspaceTitleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.workspaceTitle {
+  font-size: 1.05rem;
   font-weight: 600;
-  cursor: pointer;
-  transition: background var(--transition), border-color var(--transition);
-  font-family: inherit;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.workspaceSubtitle {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}
+
+.actionButtonGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
 }
 
 .btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1.1rem;
   background: var(--signal);
-  color: #ffffff;
+  color: #FFFFFF;
   border: 1px solid var(--signal);
+  border-radius: var(--radius-md);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition);
+  font-family: inherit;
 }
 
 .btnPrimary:hover:not(:disabled) {
   background: var(--signal-mid);
-  border-color: var(--signal-mid);
 }
 
 .btnSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1rem;
   background: var(--surface);
   color: var(--ink);
   border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  font-size: 0.84rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+  font-family: inherit;
 }
 
 .btnSecondary:hover:not(:disabled) {
@@ -104,39 +86,178 @@
 
 .btnPrimary:disabled,
 .btnSecondary:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
-.formatHint {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  color: var(--slate);
-  opacity: 0.7;
+/* ─── Dropzone ───────────────────────────────────────────────────────────── */
+.dropZone {
+  border: 1px dashed var(--color-border-strong);
+  background: var(--paper);
+  border-radius: var(--radius-md);
+  padding: 2rem 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
 }
 
-/* ─── Progress / status ──────────────────────────────────────────────────── */
+.dropZone:hover,
+.dragActive {
+  border-color: var(--signal);
+  background: var(--signal-light);
+}
+
+.dropIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: #FFFFFF;
+  color: var(--signal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.dropText {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 0.25rem;
+}
+
+.dropHint {
+  font-size: 0.74rem;
+  color: var(--color-text-subtle);
+  font-family: var(--font-mono);
+}
+
+.hiddenInput {
+  display: none;
+}
+
+/* ─── File Preview / In-Flight State ──────────────────────────────────────── */
+.previewCard {
+  background: var(--paper);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  animation: fadeIn 150ms ease;
+}
+
+.previewLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.previewThumb {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: #11141C;
+  border: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.previewThumbFallback {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--slate);
+  flex-shrink: 0;
+}
+
+.previewMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.previewName {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.previewSub {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.74rem;
+  color: var(--color-text-subtle);
+}
+
+.badgeGpsFound {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--signal);
+  background: var(--signal-light);
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-success-border);
+}
+
+.badgeNoGpsFound {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--color-warning);
+  background: var(--color-warning-light);
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-warning-border);
+}
+
+/* ─── Feedback states ─────────────────────────────────────────────────────── */
 .progressBox {
-  margin-top: 1.25rem;
   display: flex;
   align-items: center;
   gap: 0.65rem;
   background: var(--signal-light);
   color: var(--signal);
-  padding: 0.55rem 1rem;
+  padding: 0.65rem 1rem;
   border-radius: var(--radius-md);
   font-size: 0.82rem;
   font-weight: 500;
-  border: 1px solid rgba(29, 106, 84, 0.2);
+  border: 1px solid var(--color-success-border);
 }
 
 .spinner {
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(29, 106, 84, 0.25);
+  border: 2px solid rgba(22, 83, 66, 0.25);
   border-top-color: var(--signal);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
 }
 
 @keyframes spin {
@@ -144,7 +265,6 @@
 }
 
 .alertError {
-  margin-top: 1.25rem;
   display: flex;
   align-items: center;
   gap: 0.55rem;
@@ -154,23 +274,19 @@
   padding: 0.65rem 1rem;
   border-radius: var(--radius-md);
   font-size: 0.83rem;
-  text-align: left;
-  max-width: 90%;
+  line-height: 1.4;
 }
 
 .alertSuccess {
-  margin-top: 1.25rem;
   display: flex;
   align-items: center;
   gap: 0.55rem;
   background: var(--signal-light);
-  border: 1px solid rgba(29, 106, 84, 0.25);
+  border: 1px solid var(--color-success-border);
   color: var(--signal);
   padding: 0.65rem 1rem;
   border-radius: var(--radius-md);
   font-size: 0.83rem;
-  text-align: left;
-  max-width: 90%;
 }
 
 /* ─── Compact variant (gallery header) ──────────────────────────────────── */
@@ -184,7 +300,7 @@
   gap: 0.4rem;
   padding: 0.45rem 0.95rem;
   background: var(--signal);
-  color: #ffffff;
+  color: #FFFFFF;
   border: none;
   border-radius: var(--radius-md);
   font-size: 0.82rem;
@@ -205,16 +321,16 @@
 
 /* ─── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
-  .heroCard {
-    padding: 2.25rem 1.25rem;
-  }
-  .actionButtons {
+  .workspaceHeader {
     flex-direction: column;
+    align-items: flex-start;
+  }
+  .actionButtonGroup {
     width: 100%;
   }
   .btnPrimary,
   .btnSecondary {
-    width: 100%;
+    flex: 1;
     justify-content: center;
   }
 }

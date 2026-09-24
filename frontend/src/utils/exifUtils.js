@@ -22,7 +22,7 @@ export async function extractGPS(file) {
     return { latitude: gps.latitude, longitude: gps.longitude };
   } catch (err) {
     // EXIF may be missing or malformed — treat gracefully, not as an error
-    if (import.meta.env.DEV) console.warn('[exifUtils] GPS extraction failed:', err);
+    if (import.meta.env?.DEV) console.warn('[exifUtils] GPS extraction failed:', err);
     return null;
   }
 }

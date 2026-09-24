@@ -4,18 +4,20 @@ import { sharePhoto, fetchThumbnailBlob } from '../services/driveService';
 import styles from './ShareModal.module.css';
 
 /**
- * ShareModal — Dialog for sharing photos with Google accounts via Drive permissions.
- * Matches Panel 5 of the reference design image.
+ * ShareModal — Granular Drive permission sharing dialog:
+ *  - Grants direct user-level access via Google Drive API (no public links)
+ *  - Supports Reader and Writer permission roles
+ *  - Clean feedback states with zero raw API leaks
  */
 function ShareModal({ photo, onClose }) {
   const { token } = useAuth();
-  const [email, setEmail]       = useState('su1@vr2.in');
-  const [role, setRole]         = useState('writer'); // 'reader' | 'writer'
-  const [notify, setNotify]     = useState(false);
-  const [sharing, setSharing]   = useState(false);
-  const [success, setSuccess]   = useState(null);
-  const [error, setError]       = useState(null);
-  const [imgSrc, setImgSrc]     = useState(photo?.thumbnailLink || null);
+  const [email, setEmail] = useState('su1@vr2.in');
+  const [role, setRole] = useState('writer'); // 'reader' | 'writer'
+  const [notify, setNotify] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [success, setSuccess] = useState(null);
+  const [error, setError] = useState(null);
+  const [imgSrc, setImgSrc] = useState(photo?.thumbnailLink || null);
 
   useEffect(() => {
     let active = true;
@@ -53,7 +55,7 @@ function ShareModal({ photo, onClose }) {
       setSuccess(`Photo shared successfully with ${email.trim()}!`);
     } catch (err) {
       if (import.meta.env.DEV) console.error('[ShareModal] share error:', err);
-      setError('Sharing failed. Please check the email address and try again.');
+      setError('Sharing failed. Please check the email address and your network connection.');
     } finally {
       setSharing(false);
     }
@@ -61,7 +63,13 @@ function ShareModal({ photo, onClose }) {
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="share-title">
+      <div
+        className={styles.modal}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="share-title"
+      >
         {/* Header */}
         <div className={styles.header}>
           <h2 id="share-title" className={styles.title}>Share Photo</h2>
@@ -81,37 +89,43 @@ function ShareModal({ photo, onClose }) {
           </div>
           <div className={styles.photoInfo}>
             <span className={styles.photoName} title={photo.name}>{photo.name}</span>
-            <span className={styles.photoMeta}>Google Drive Photo</span>
+            <span className={styles.photoMeta}>Google Drive Document</span>
           </div>
         </div>
 
         {/* Share Form */}
         <form onSubmit={handleSubmit} className={styles.form}>
-          <label htmlFor="share-email" className={styles.inputLabel}>
-            Share with Google account
-          </label>
-          <div className={styles.inputRow}>
-            <input
-              id="share-email"
-              type="email"
-              className={styles.emailInput}
-              placeholder="e.g. su1@vr2.in"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={sharing}
-            />
-            <select
-              className={styles.roleSelect}
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              disabled={sharing}
-              aria-label="Permission role"
-            >
-              <option value="writer">Editor</option>
-              <option value="reader">Viewer</option>
-            </select>
+          <div>
+            <label htmlFor="share-email" className={styles.inputLabel}>
+              Share with Google account
+            </label>
+            <div className={styles.inputRow} style={{ marginTop: '0.4rem' }}>
+              <input
+                id="share-email"
+                type="email"
+                className={styles.emailInput}
+                placeholder="e.g. su1@vr2.in"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={sharing}
+              />
+              <select
+                className={styles.roleSelect}
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                disabled={sharing}
+                aria-label="Permission role"
+              >
+                <option value="writer">Editor</option>
+                <option value="reader">Viewer</option>
+              </select>
+            </div>
           </div>
+
+          <p className={styles.permissionNote}>
+            This grants access securely using Google Drive permissions. No public web links are created.
+          </p>
 
           <label className={styles.checkboxLabel}>
             <input
@@ -120,7 +134,7 @@ function ShareModal({ photo, onClose }) {
               onChange={(e) => setNotify(e.target.checked)}
               disabled={sharing}
             />
-            <span>Notify people</span>
+            <span>Send email notification from Google Drive</span>
           </label>
 
           {/* Feedback Banners */}
@@ -154,7 +168,7 @@ function ShareModal({ photo, onClose }) {
               className={styles.submitBtn}
               disabled={sharing || !email.trim()}
             >
-              {sharing ? 'Sharing…' : 'Share'}
+              {sharing ? 'Sharing…' : 'Share Photo'}
             </button>
           </div>
         </form>

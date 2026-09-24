@@ -45,39 +45,34 @@ export async function findOrCreateSheet(authClient, folderId) {
     return id;
   }
 
-  // Create the spreadsheet inside the folder
-  const sheets = google.sheets({ version: 'v4', auth: authClient });
-  const { data: newSheet } = await sheets.spreadsheets.create({
+  // Create the spreadsheet directly inside the folder using Drive API
+  const { data: newSheetFile } = await drive.files.create({
     requestBody: {
-      properties: { title: SHEET_NAME },
-      sheets: [{
-        properties: { title: 'Locations' },
-        data: [{
-          startRow: 0,
-          startColumn: 0,
-          rowData: [{
-            values: [
-              { userEnteredValue: { stringValue: 'Photo Name' } },
-              { userEnteredValue: { stringValue: 'Drive Link' } },
-              { userEnteredValue: { stringValue: 'Latitude' } },
-              { userEnteredValue: { stringValue: 'Longitude' } },
-              { userEnteredValue: { stringValue: 'Timestamp' } },
-            ],
-          }],
-        }],
-      }],
+      name: SHEET_NAME,
+      mimeType: 'application/vnd.google-apps.spreadsheet',
+      parents: [folderId],
     },
+    fields: 'id',
   });
 
-  const sheetFileId = newSheet.spreadsheetId;
+  const sheetFileId = newSheetFile.id;
 
-  // Move the newly created sheet into the Drive folder
-  await drive.files.update({
-    fileId: sheetFileId,
-    addParents: folderId,
-    removeParents: 'root',
-    fields: 'id, parents',
-  });
+  // Initialize the header row using Sheets API
+  try {
+    const sheets = google.sheets({ version: 'v4', auth: authClient });
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: sheetFileId,
+      range: 'A1:E1',
+      valueInputOption: 'USER_ENTERED',
+      requestBody: {
+        values: [
+          ['Photo Name', 'Drive Link', 'Latitude', 'Longitude', 'Timestamp'],
+        ],
+      },
+    });
+  } catch (initErr) {
+    console.warn('[sheetsService] header initialization warning:', initErr.message ?? initErr);
+  }
 
   _sheetCache.set(folderId, sheetFileId);
   return sheetFileId;
@@ -95,7 +90,7 @@ export async function logToSheet(authClient, spreadsheetId, { fileName, fileLink
 
   await sheets.spreadsheets.values.append({
     spreadsheetId,
-    range: 'Locations!A:E',
+    range: 'A:E',
     valueInputOption: 'USER_ENTERED',
     requestBody: {
       values: [[
@@ -117,27 +112,34 @@ export async function logToSheet(authClient, spreadsheetId, { fileName, fileLink
  * @returns {Promise<Record<string, { lat: number|null, lng: number|null }>>}
  */
 export async function getGpsDataFromSheet(authClient, spreadsheetId) {
+  if (!spreadsheetId) return {};
   const sheets = google.sheets({ version: 'v4', auth: authClient });
 
-  const { data } = await sheets.spreadsheets.values.get({
-    spreadsheetId,
-    range: 'Locations!A:E',
-  });
+  try {
+    const { data } = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: 'A:E',
+    });
 
-  const rows = data.values ?? [];
-  const gpsMap = {};
+    const rows = data.values ?? [];
+    const gpsMap = {};
 
-  // Skip the header row (index 0)
-  for (let i = 1; i < rows.length; i++) {
-    const [name, , latStr, lngStr] = rows[i];
-    if (!name) continue;
-    gpsMap[name] = {
-      lat: latStr ? parseFloat(latStr) : null,
-      lng: lngStr ? parseFloat(lngStr) : null,
-    };
+    // Skip the header row (index 0)
+    for (let i = 1; i < rows.length; i++) {
+      const [name, , latStr, lngStr, timestamp] = rows[i];
+      if (!name) continue;
+      gpsMap[name] = {
+        lat: latStr ? parseFloat(latStr) : null,
+        lng: lngStr ? parseFloat(lngStr) : null,
+        timestamp: timestamp || null,
+      };
+    }
+
+    return gpsMap;
+  } catch (err) {
+    console.warn('[sheetsService] getGpsDataFromSheet error:', err.message ?? err);
+    return {};
   }
-
-  return gpsMap;
 }
 
 /**
@@ -148,16 +150,17 @@ export async function getGpsDataFromSheet(authClient, spreadsheetId) {
  * @returns {Promise<{ spreadsheetId: string, spreadsheetUrl: string, rows: string[][] }>}
  */
 export async function getSheetData(authClient, spreadsheetId) {
+  if (!spreadsheetId) return { spreadsheetId: '', spreadsheetUrl: '', rows: [] };
   const sheets = google.sheets({ version: 'v4', auth: authClient });
 
   const [metaRes, valRes] = await Promise.all([
     sheets.spreadsheets.get({ spreadsheetId, fields: 'spreadsheetUrl' }).catch(() => ({ data: {} })),
-    sheets.spreadsheets.values.get({ spreadsheetId, range: 'Locations!A:E' }),
+    sheets.spreadsheets.values.get({ spreadsheetId, range: 'A:E' }).catch(() => ({ data: { values: [] } })),
   ]);
 
   return {
     spreadsheetId,
-    spreadsheetUrl: metaRes.data.spreadsheetUrl || `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`,
-    rows: valRes.data.values ?? [],
+    spreadsheetUrl: metaRes.data?.spreadsheetUrl || `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`,
+    rows: valRes.data?.values ?? [],
   };
 }
