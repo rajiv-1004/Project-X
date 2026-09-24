@@ -7,35 +7,36 @@
 }
 
 .headerRow {
-  padding-bottom: 0.5rem;
+  padding-bottom: 0.85rem;
   border-bottom: 1px solid var(--color-border);
 }
 
 .pageTitle {
-  font-size: 1.75rem;
+  font-size: 1.4rem;
   font-weight: 700;
-  color: var(--color-text-main);
+  color: var(--ink);
   letter-spacing: -0.02em;
-  margin-bottom: 0.25rem;
 }
 
 .pageSubtitle {
-  font-size: 0.92rem;
-  color: var(--color-text-muted);
+  font-size: 0.83rem;
+  color: var(--slate);
+  margin-top: 0.2rem;
 }
 
+/* ─── Settings sections grid ─────────────────────────────────────────────────── */
 .sectionsGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
+/* ─── Card ───────────────────────────────────────────────────────────────────── */
 .card {
-  background: var(--color-surface);
+  background: var(--surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: 1.5rem;
-  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-md);
+  padding: 1.35rem 1.4rem;
   display: flex;
   flex-direction: column;
 }
@@ -44,14 +45,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.1rem;
 }
 
 .cardTitleWrap {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
+  gap: 0.65rem;
+  margin-bottom: 1.1rem;
 }
 
 .cardTop .cardTitleWrap {
@@ -59,42 +60,39 @@
 }
 
 .cardHeading {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  color: var(--color-text-main);
+  color: var(--ink);
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .iconCircle {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-md);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
+  background: var(--signal-light);
+  color: var(--signal);
+  flex-shrink: 0;
 }
 
-.blueIcon {
-  background: var(--color-primary-light);
-  color: var(--color-primary);
-}
-
-.greenIcon {
-  background: #dcfce7;
-  color: #15803d;
-}
-
+/* Keep class names for JS compatibility but unify colour */
+.blueIcon,
+.greenIcon,
 .purpleIcon {
-  background: #f3e8ff;
-  color: #9333ea;
+  background: var(--signal-light);
+  color: var(--signal);
 }
 
 .linkAction {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  color: var(--color-primary);
-  font-size: 0.85rem;
+  gap: 0.3rem;
+  color: var(--signal);
+  font-size: 0.8rem;
   font-weight: 600;
   text-decoration: none;
 }
@@ -103,84 +101,87 @@
   text-decoration: underline;
 }
 
+/* ─── Profile row ────────────────────────────────────────────────────────────── */
 .profileRow {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
 .avatarImg {
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
   border-radius: var(--radius-full);
   object-fit: cover;
-  border: 2px solid var(--color-border);
+  border: 1px solid var(--color-border);
 }
 
 .avatarFallback {
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
   border-radius: var(--radius-full);
-  background: var(--color-primary);
+  background: var(--signal);
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   font-weight: 700;
 }
 
 .profileInfo {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.25rem;
 }
 
 .profileName {
-  font-size: 1.15rem;
+  font-size: 1rem;
   font-weight: 700;
-  color: var(--color-text-main);
+  color: var(--ink);
 }
 
 .profileEmail {
-  font-size: 0.88rem;
-  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  color: var(--slate);
 }
 
 .statusPill {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  background: #dcfce7;
-  color: #15803d;
-  font-size: 0.78rem;
+  gap: 0.35rem;
+  background: var(--signal-light);
+  color: var(--signal);
+  font-size: 0.72rem;
   font-weight: 600;
-  padding: 0.2rem 0.6rem;
+  padding: 0.15rem 0.55rem;
   border-radius: var(--radius-full);
-  margin-top: 0.25rem;
+  margin-top: 0.2rem;
   width: fit-content;
+  border: 1px solid rgba(29, 106, 84, 0.2);
 }
 
 .statusDot {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
-  background: #16a34a;
+  background: var(--signal);
 }
 
+/* ─── Detail rows ────────────────────────────────────────────────────────────── */
 .detailsList {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0.75rem;
 }
 
 .detailRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.88rem;
+  font-size: 0.83rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .detailRow:last-child {
@@ -189,74 +190,77 @@
 }
 
 .detailKey {
-  color: var(--color-text-muted);
+  color: var(--slate);
 }
 
 .detailVal {
   font-weight: 600;
-  color: var(--color-text-main);
+  color: var(--ink);
 }
 
 .detailValMono {
-  font-family: monospace;
-  font-size: 0.82rem;
-  background: #f1f5f9;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  color: #334155;
-  max-width: 200px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  background: var(--paper);
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm);
+  color: var(--slate);
+  max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  border: 1px solid var(--color-border);
 }
 
+/* ─── Specs list ─────────────────────────────────────────────────────────────── */
 .specsList {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.65rem;
 }
 
 .specItem {
-  font-size: 0.88rem;
-  color: var(--color-text-muted);
+  font-size: 0.83rem;
+  color: var(--slate);
   line-height: 1.45;
 }
 
 .specItem strong {
-  color: var(--color-text-main);
+  color: var(--ink);
 }
 
+/* ─── Session card ───────────────────────────────────────────────────────────── */
 .sessionCard {
-  background: var(--color-surface);
-  border: 1px solid #fee2e2;
-  border-radius: var(--radius-lg);
-  padding: 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--color-error-border);
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1.4rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
 .sessionTitle {
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  color: var(--color-text-main);
-  margin-bottom: 0.25rem;
+  color: var(--ink);
+  margin-bottom: 0.2rem;
 }
 
 .sessionDesc {
-  font-size: 0.88rem;
-  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  color: var(--slate);
   margin: 0;
 }
 
 .logoutBtn {
-  padding: 0.65rem 1.4rem;
-  background: #dc2626;
+  padding: 0.6rem 1.25rem;
+  background: var(--color-error);
   color: #ffffff;
   border: none;
   border-radius: var(--radius-md);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -264,9 +268,10 @@
 }
 
 .logoutBtn:hover {
-  background: #b91c1c;
+  background: #A93226;
 }
 
+/* ─── Responsive ─────────────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
   .sectionsGrid {
     grid-template-columns: 1fr;
