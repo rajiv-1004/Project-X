@@ -1,0 +1,12 @@
+# Project X does not use Python.
+# The application is built entirely using JavaScript / TypeScript:
+#   - Frontend: React 18, Vite 5, Leaflet, Exifr
+#   - Backend:  Node.js (>= 18.0.0), Express 4, googleapis
+#
+# To install the application's dependencies, use npm in their respective folders:
+#
+# 1. Backend:
+#    cd backend && npm install
+#
+# 2. Frontend:
+#    cd frontend && npm install
