@@ -31,7 +31,8 @@ export function AuthProvider({ children }) {
   const logout = useCallback((reason = null) => {
     setUser(null);
     setToken(null);
-    setSessionError(reason);
+    setLoading(false);
+    setSessionError(typeof reason === 'string' ? reason : null);
   }, []);
 
   // Listen for 401 Unauthorized from any API request mid-session

@@ -17,9 +17,15 @@ const SHEET_NAME = 'GPS Log';
 // Avoids repeated Drive file search calls for the spreadsheet within the same session.
 const _sheetCache = new Map();
 
+// In-flight promise map: guarantees concurrent requests await the same sheet search/create operation
+const _inFlightSheetSearches = new Map();
+
 /**
  * Find the GPS Log Sheet inside the user's folder, or create it if absent.
- * Guaranteed to never produce duplicates.
+ * Guaranteed to never produce duplicates:
+ *  - Checks in-session cache
+ *  - Awaits any in-flight concurrent search/create promise
+ *  - Searches by parent folder + name + mimeType before creating
  *
  * @param {import('googleapis').Auth.OAuth2Client} authClient
  * @param {string} folderId - The parent Drive folder ID
@@ -30,52 +36,66 @@ export async function findOrCreateSheet(authClient, folderId) {
     return _sheetCache.get(folderId);
   }
 
-  const drive = google.drive({ version: 'v3', auth: authClient });
-
-  // Search for an existing Sheet with this name in the folder (not trashed)
-  const { data } = await drive.files.list({
-    q: `'${folderId}' in parents and mimeType='application/vnd.google-apps.spreadsheet' and name='${SHEET_NAME}' and trashed=false`,
-    fields: 'files(id)',
-    pageSize: 1,
-  });
-
-  if (data.files?.length > 0) {
-    const id = data.files[0].id;
-    _sheetCache.set(folderId, id);
-    return id;
+  // If another request is currently searching or creating the sheet, wait for it
+  if (_inFlightSheetSearches.has(folderId)) {
+    return _inFlightSheetSearches.get(folderId);
   }
 
-  // Create the spreadsheet directly inside the folder using Drive API
-  const { data: newSheetFile } = await drive.files.create({
-    requestBody: {
-      name: SHEET_NAME,
-      mimeType: 'application/vnd.google-apps.spreadsheet',
-      parents: [folderId],
-    },
-    fields: 'id',
-  });
+  const task = (async () => {
+    try {
+      const drive = google.drive({ version: 'v3', auth: authClient });
 
-  const sheetFileId = newSheetFile.id;
+      // Search for an existing Sheet with this name in the folder (not trashed)
+      const { data } = await drive.files.list({
+        q: `'${folderId}' in parents and mimeType='application/vnd.google-apps.spreadsheet' and name='${SHEET_NAME}' and trashed=false`,
+        fields: 'files(id)',
+        pageSize: 1,
+      });
 
-  // Initialize the header row using Sheets API
-  try {
-    const sheets = google.sheets({ version: 'v4', auth: authClient });
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: sheetFileId,
-      range: 'A1:E1',
-      valueInputOption: 'USER_ENTERED',
-      requestBody: {
-        values: [
-          ['Photo Name', 'Drive Link', 'Latitude', 'Longitude', 'Timestamp'],
-        ],
-      },
-    });
-  } catch (initErr) {
-    console.warn('[sheetsService] header initialization warning:', initErr.message ?? initErr);
-  }
+      if (data.files?.length > 0) {
+        const id = data.files[0].id;
+        _sheetCache.set(folderId, id);
+        return id;
+      }
 
-  _sheetCache.set(folderId, sheetFileId);
-  return sheetFileId;
+      // Create the spreadsheet directly inside the folder using Drive API
+      const { data: newSheetFile } = await drive.files.create({
+        requestBody: {
+          name: SHEET_NAME,
+          mimeType: 'application/vnd.google-apps.spreadsheet',
+          parents: [folderId],
+        },
+        fields: 'id',
+      });
+
+      const sheetFileId = newSheetFile.id;
+
+      // Initialize the header row using Sheets API
+      try {
+        const sheets = google.sheets({ version: 'v4', auth: authClient });
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: sheetFileId,
+          range: 'A1:E1',
+          valueInputOption: 'USER_ENTERED',
+          requestBody: {
+            values: [
+              ['Photo Name', 'Drive Link', 'Latitude', 'Longitude', 'Timestamp'],
+            ],
+          },
+        });
+      } catch (initErr) {
+        console.warn('[sheetsService] header initialization warning:', initErr.message ?? initErr);
+      }
+
+      _sheetCache.set(folderId, sheetFileId);
+      return sheetFileId;
+    } finally {
+      _inFlightSheetSearches.delete(folderId);
+    }
+  })();
+
+  _inFlightSheetSearches.set(folderId, task);
+  return task;
 }
 
 /**

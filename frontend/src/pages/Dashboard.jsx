@@ -193,7 +193,7 @@ function Dashboard() {
           <button
             id="sidebar-logout-btn"
             className={styles.logoutIconBtn}
-            onClick={logout}
+            onClick={() => logout()}
             title="Sign out"
             aria-label="Sign out"
           >
@@ -251,7 +251,7 @@ function Dashboard() {
               </button>
             )}
 
-            <button id="logout-btn" className={styles.headerLogoutBtn} onClick={logout}>
+            <button id="logout-btn" className={styles.headerLogoutBtn} onClick={() => logout()}>
               Sign out
             </button>
           </div>

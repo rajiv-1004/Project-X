@@ -22,6 +22,8 @@
 7. **Interactive Map View**: Centered map navigation using OpenStreetMap and Leaflet (`react-leaflet`) without paid map APIs.
 8. **Drive-Based Sharing**: Secure user-level permission sharing with target Google accounts (e.g. `su1@vr2.in`) without public links.
 
+> **🎥 Video Demonstration**: [Watch the complete end-to-end application working video on Google Drive](https://drive.google.com/file/d/1eO_4GZHbmUk7u_TACAl-krneacvTkfWt/view?usp=sharing)
+
 > **Note on the Sheet log view**: The app includes a "Google Sheet Log" sidebar view that renders the GPS data table from the Sheet created in Requirement 5 directly inside the dashboard. This is an added convenience view — not a separate graded requirement — providing quick in-app access to the same Sheet log data without leaving the interface.
 
 ---

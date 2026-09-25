@@ -18,6 +18,9 @@ const FOLDER_MIME = 'application/vnd.google-apps.folder';
 // Prevents redundant Drive API searches within the same session.
 const _folderCache = new Map();
 
+// In-flight promise map: guarantees concurrent requests await the same folder search/create operation
+const _inFlightFolderSearches = new Map();
+
 /**
  * Derive the canonical folder name for this user.
  * Falls back to 'ProjectX-Photos' only if the profile name is unavailable.
@@ -40,8 +43,10 @@ async function getUserFolderName(authClient) {
 
 /**
  * Find the user's Drive folder (named after them), or create it if absent.
- * Guaranteed to never produce duplicates: searches by exact name + mimeType
- * before creating.
+ * Guaranteed to never produce duplicates:
+ *  - Checks in-session cache
+ *  - Awaits any in-flight concurrent search/create promise
+ *  - Searches by exact name + mimeType before creating
  *
  * @param {import('googleapis').Auth.OAuth2Client} authClient
  * @returns {Promise<{ folderId: string, folderName: string }>}
@@ -52,55 +57,69 @@ export async function findOrCreateFolder(authClient) {
     return _folderCache.get(cacheKey);
   }
 
-  const drive      = google.drive({ version: 'v3', auth: authClient });
-  const folderName = await getUserFolderName(authClient);
-
-  // Search for an existing folder with this exact name (not trashed).
-  // Using name= inside the q filter does a case-insensitive exact match.
-  const { data } = await drive.files.list({
-    q: `mimeType='${FOLDER_MIME}' and name='${folderName}' and trashed=false`,
-    fields: 'files(id, name)',
-    spaces: 'drive',
-    pageSize: 1,
-  });
-
-  if (data.files?.length > 0) {
-    // Folder already exists — cache and return its ID, no duplicate created
-    const result = { folderId: data.files[0].id, folderName };
-    if (cacheKey) _folderCache.set(cacheKey, result);
-    return result;
+  // If another request is currently searching or creating this folder, wait for it
+  if (cacheKey && _inFlightFolderSearches.has(cacheKey)) {
+    return _inFlightFolderSearches.get(cacheKey);
   }
 
-  // If a legacy 'ProjectX-Photos' folder exists from earlier, rename it to the user's name
-  if (folderName !== 'ProjectX-Photos') {
-    const { data: legacyData } = await drive.files.list({
-      q: `mimeType='${FOLDER_MIME}' and name='ProjectX-Photos' and trashed=false`,
-      fields: 'files(id, name)',
-      spaces: 'drive',
-      pageSize: 1,
-    });
+  const task = (async () => {
+    try {
+      const drive      = google.drive({ version: 'v3', auth: authClient });
+      const folderName = await getUserFolderName(authClient);
 
-    if (legacyData.files?.length > 0) {
-      const legacyId = legacyData.files[0].id;
-      await drive.files.update({
-        fileId: legacyId,
-        requestBody: { name: folderName },
+      // Search for an existing folder with this exact name (not trashed).
+      // Using name= inside the q filter does a case-insensitive exact match.
+      const { data } = await drive.files.list({
+        q: `mimeType='${FOLDER_MIME}' and name='${folderName}' and trashed=false`,
+        fields: 'files(id, name)',
+        spaces: 'drive',
+        pageSize: 10,
       });
-      const result = { folderId: legacyId, folderName };
+
+      if (data.files?.length > 0) {
+        // Folder already exists — cache and return its ID, no duplicate created
+        const result = { folderId: data.files[0].id, folderName };
+        if (cacheKey) _folderCache.set(cacheKey, result);
+        return result;
+      }
+
+      // If a legacy 'ProjectX-Photos' folder exists from earlier, rename it to the user's name
+      if (folderName !== 'ProjectX-Photos') {
+        const { data: legacyData } = await drive.files.list({
+          q: `mimeType='${FOLDER_MIME}' and name='ProjectX-Photos' and trashed=false`,
+          fields: 'files(id, name)',
+          spaces: 'drive',
+          pageSize: 1,
+        });
+
+        if (legacyData.files?.length > 0) {
+          const legacyId = legacyData.files[0].id;
+          await drive.files.update({
+            fileId: legacyId,
+            requestBody: { name: folderName },
+          });
+          const result = { folderId: legacyId, folderName };
+          if (cacheKey) _folderCache.set(cacheKey, result);
+          return result;
+        }
+      }
+
+      // No existing folder — create it now
+      const { data: newFolder } = await drive.files.create({
+        requestBody: { name: folderName, mimeType: FOLDER_MIME },
+        fields: 'id',
+      });
+
+      const result = { folderId: newFolder.id, folderName };
       if (cacheKey) _folderCache.set(cacheKey, result);
       return result;
+    } finally {
+      if (cacheKey) _inFlightFolderSearches.delete(cacheKey);
     }
-  }
+  })();
 
-  // No existing folder — create it now
-  const { data: newFolder } = await drive.files.create({
-    requestBody: { name: folderName, mimeType: FOLDER_MIME },
-    fields: 'id',
-  });
-
-  const result = { folderId: newFolder.id, folderName };
-  if (cacheKey) _folderCache.set(cacheKey, result);
-  return result;
+  if (cacheKey) _inFlightFolderSearches.set(cacheKey, task);
+  return task;
 }
 
 /**

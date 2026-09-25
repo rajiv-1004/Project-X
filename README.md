@@ -2,13 +2,16 @@
 
 A full-stack web application designed for field documentation, surveying, and geospatial asset inspection. Authenticated users can sign in with their Google account, capture or upload field photographs, automatically extract GPS coordinates directly from photo EXIF metadata, store images securely in a dedicated Google Drive folder, maintain a structured real-time GPS log in Google Sheets, browse photos in an interactive library, explore locations on a Leaflet OpenStreetMap, and share records with other Google accounts using Google Drive user permissions.
 
+> 🎥 **Video Demo**: [Watch the complete end-to-end application working demo on Google Drive](https://drive.google.com/file/d/1eO_4GZHbmUk7u_TACAl-krneacvTkfWt/view?usp=sharing)
+
 ---
 
 ## Table of Contents
 
-1. [Features](#features)
-2. [Technology Stack](#technology-stack)
-3. [Architecture](#architecture)
+1. [Video Demonstration](#video-demonstration)
+2. [Features](#features)
+3. [Technology Stack](#technology-stack)
+4. [Architecture](#architecture)
 4. [Prerequisites](#prerequisites)
 5. [Google Cloud Setup](#google-cloud-setup)
 6. [Google OAuth Test Users](#google-oauth-test-users)
@@ -25,6 +28,14 @@ A full-stack web application designed for field documentation, surveying, and ge
 17. [Project Structure](#project-structure)
 18. [Development Commands](#development-commands)
 19. [Testing & Verification](#testing--verification)
+
+---
+
+## Video Demonstration
+
+A complete end-to-end video recording demonstrating the working application across all 8 assessment requirements (Google OAuth sign-in, Drive folder auto-creation, geotagged photo upload, client-side EXIF GPS extraction, real-time Google Sheets logging, photo gallery inspection, Leaflet OpenStreetMap view, and Drive-based user sharing with `su1@vr2.in`) is available on Google Drive:
+
+🎥 **[Watch Full Video Demonstration (Google Drive)](https://drive.google.com/file/d/1eO_4GZHbmUk7u_TACAl-krneacvTkfWt/view?usp=sharing)**
 
 ---
 

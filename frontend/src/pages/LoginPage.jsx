@@ -15,7 +15,7 @@ function LoginPage() {
   const [error, setError] = useState(null);
   const [signingIn, setSigningIn] = useState(false);
 
-  const activeError = error || sessionError;
+  const activeError = typeof error === 'string' ? error : (typeof sessionError === 'string' ? sessionError : null);
 
   const handleSuccess = useCallback(async ({ code }) => {
     setSigningIn(true);
